@@ -63,7 +63,7 @@ Questa checklist ti guida attraverso **4 fasi principali**:
   # Crea students.csv se necessario
   cat > volumes/students.csv << EOF
   classe,cognome,nome,username
-  3A,Rossi,Marco,rossi.mario
+  3A,Rossi,Marco,rossi.marco
   3A,Bianchi,Giulia,bianchi.giulia
   EOF
   ```
@@ -155,7 +155,8 @@ Questa checklist ti guida attraverso **4 fasi principali**:
 ### ✅ 3.3 Test Database
 - [ ] **Connessione MySQL esterna**
   ```bash
-  mysql -h localhost -P 3307 -u admin -p
+  #mysql -h localhost -P 3307 -u admin -p
+  mysql -h 172.22.0.9 -P 3306 -u admin -p
   # Password: admin123
   SHOW DATABASES;
   # Dovresti vedere: web4student, db_username, etc.
@@ -171,13 +172,13 @@ Questa checklist ti guida attraverso **4 fasi principali**:
 ### ✅ 3.4 Test Siti Web Studenti
 - [ ] **Sito studente (se creato)**
   ```bash
-  curl http://localhost:8080/~mrossi/
+  curl http://localhost:8080/~rossi.marco/
   # Dovrebbe mostrare la pagina personale
   ```
 - [ ] **Adminer personale**
   ```bash
-  # Browser: http://localhost:8080/~mrossi/adminer.php
-  # Server: localhost, Username: mrossi, Password: mrossi123
+  # Browser: http://localhost:8080/~rossi.marco/adminer.php
+  # Server: localhost, Username: rossi.marco, Password: rossi.marco123
   ```
 
 ### ✅ 3.5 Test Funzionalità Sviluppo
