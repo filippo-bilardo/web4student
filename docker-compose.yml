@@ -49,6 +49,7 @@ services:
       - "2222:22"
       - "8080:80"   # se si decide di aprire direttamente la porta 8080 dell'host
       - "3030:3000" # se si decide di aprire direttamente la porta 3030 dell'host
+      - "3307:3306" # se si decide di aprire direttamente la porta 3307 dell'host
 
     expose:
       - "80"     # HTTP per nginx-proxy-manager

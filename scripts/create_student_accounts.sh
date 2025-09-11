@@ -171,7 +171,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 EOF
+
+    # Crea il file info.php per mostrare le informazioni PHP
+    cat > "$WWW_DIR/info.php" << EOF
+<?php
+/**
+ * Pagina di informazioni PHP
+ * Mostra la configurazione del server PHP
+ */
+
+// Intestazione della pagina
+echo "<!DOCTYPE html>
+<html lang='it'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Informazioni PHP - $nome $cognome</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .info-box {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class='header'>
+        <h1>ℹ️ Informazioni PHP</h1>
+        <p>Configurazione del server PHP per $nome $cognome</p>
+    </div>
     
+    <div class='info-box'>
+        <h2>📊 Dati Studente</h2>
+        <p><strong>Nome:</strong> $nome $cognome</p>
+        <p><strong>Classe:</strong> $classe</p>
+        <p><strong>Username:</strong> $username</p>
+        <p><strong>Data generazione:</strong> " . date('d/m/Y H:i:s') . "</p>
+    </div>
+    
+    <div class='info-box'>
+        <h2>⚙️ Configurazione PHP</h2>
+        <p>Di seguito sono riportate le informazioni complete sulla configurazione PHP:</p>
+    </div>
+";
+
+// Mostra le informazioni PHP
+phpinfo();
+
+// Chiusura della pagina
+echo "
+</body>
+</html>";
+?>
+EOF
+
     # Crea link simbolico ad Adminer (invece di copiarlo)
     if [ -f /var/www/html/adminer.php ]; then
         ln -sf /var/www/html/adminer.php "$WWW_DIR/adminer.php"
@@ -294,26 +361,26 @@ if [ -d "/home/prof" ]; then
     echo "🔐 Home directory prof protetta (ibrida)"
 fi
 
-# Protegge altre directory utente esistenti
-find /home -maxdepth 2 -type d -name '[0-9]*' 2>/dev/null | while read class_dir; do
-    if [ -d "$class_dir" ]; then
-        chmod 755 "$class_dir" 2>/dev/null || true
-        echo "🔐 Directory classe protetta: $class_dir"
-    fi
-done
+# # Protegge altre directory utente esistenti
+# find /home -maxdepth 2 -type d -name '[0-9]*' 2>/dev/null | while read class_dir; do
+#     if [ -d "$class_dir" ]; then
+#         chmod 755 "$class_dir" 2>/dev/null || true
+#         echo "🔐 Directory classe protetta: $class_dir"
+#     fi
+# done
 
-# Protegge home directory esistenti degli studenti
-find /home -maxdepth 3 -type d -name '*.*' 2>/dev/null | while read user_dir; do
-    if [ -d "$user_dir" ] && [ "$user_dir" != "/home/prof" ]; then
-        # Trova il proprietario della directory
-        owner=$(stat -c '%U' "$user_dir" 2>/dev/null)
-        if [ "$owner" != "root" ] && [ "$owner" != "www-data" ]; then
-            # Permessi completi per Apache userdir
-            chmod 755 "$user_dir" 2>/dev/null || true
-            echo "🔐 Home directory protetta (userdir): $user_dir ($owner)"
-        fi
-    fi
-done
+# # Protegge home directory esistenti degli studenti
+# find /home -maxdepth 3 -type d -name '*.*' 2>/dev/null | while read user_dir; do
+#     if [ -d "$user_dir" ] && [ "$user_dir" != "/home/prof" ]; then
+#         # Trova il proprietario della directory
+#         owner=$(stat -c '%U' "$user_dir" 2>/dev/null)
+#         if [ "$owner" != "root" ] && [ "$owner" != "www-data" ]; then
+#             # Permessi completi per Apache userdir
+#             chmod 755 "$user_dir" 2>/dev/null || true
+#             echo "🔐 Home directory protetta (userdir): $user_dir ($owner)"
+#         fi
+#     fi
+# done
 
 echo ""
 echo "🎉 Creazione account completata!"

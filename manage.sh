@@ -18,17 +18,12 @@ show_usage() {
     echo "  status            - Mostra lo stato del container"
     echo "  create-users      - Crea utenti dal file students.csv"
     echo "  configure-aliases - Riconfigura alias Apache per utenti esistenti"
-    echo "  fix-permissions   - Corregge i permessi delle directory utenti"
-    echo "  fix-prof-home     - Corregge home directory utente prof"
     echo "  mysql-status      - Verifica stato MySQL/MariaDB"
     echo "  mysql-fix         - Corregge problemi MySQL"
     echo "  mysql-root        - Accede a MySQL come root"
     echo "  mysql-admin       - Accede a MySQL come admin"
-    echo "  apply-quotas      - Applica quote disco a tutti gli utenti"
     echo "  check-quotas      - Verifica quote disco utilizzate"
     echo "  reset-quota       - Reimposta quota per un utente specifico"
-    echo "  install-adminer   - Installa Adminer per tutti gli utenti esistenti"
-    echo "  remove-adminer    - Rimuove link Adminer dalle directory utenti"
     echo "  clean             - Rimuove container e immagini"
     echo "  backup            - Crea backup delle home directory"
     echo "  restore           - Ripristina backup delle home directory"
@@ -108,48 +103,7 @@ case "$1" in
         echo "🔧 Riconfigurazione alias Apache per utenti esistenti..."
         docker compose exec web4student /usr/local/bin/configure_user_aliases.sh
         echo "✅ Alias riconfigurati!"
-        ;;
-    
-    fix-permissions)
-        echo "🔧 Correzione permessi directory utenti..."
-        docker exec web4student find /home -type d -name "www" -exec chmod 755 {} \;
-        docker exec web4student find /home -name "*.html" -exec chmod 644 {} \;
-        docker exec web4student find /home -name "*.php" -exec chmod 644 {} \;
-        echo "✅ Permessi corretti!"
-        ;;
-    
-    fix-prof-home)
-        echo "👨‍🏫 Correzione home directory prof..."
-        docker exec web4student bash -c '
-            if [ ! -d "/home/prof" ]; then
-                echo "❌ Home directory /home/prof non esiste, creando..."
-                mkdir -p /home/prof
-                chown prof:prof /home/prof
-                chmod 755 /home/prof
-                echo "✅ Home directory /home/prof creata"
-            else
-                echo "✅ Home directory /home/prof già esiste"
-            fi
-            
-            # Crea file di configurazione base se non esistono
-            if [ ! -f "/home/prof/.bashrc" ]; then
-                echo "📝 Creazione file di configurazione..."
-                cp /etc/skel/.* /home/prof/ 2>/dev/null || true
-                chown prof:prof /home/prof/.* 2>/dev/null || true
-                echo "✅ File di configurazione creati"
-            fi
-            
-            # Crea directory www se non esiste
-            if [ ! -d "/home/prof/www" ]; then
-                echo "🌐 Creazione directory www per prof..."
-                mkdir -p /home/prof/www
-                chown prof:prof /home/prof/www
-                chmod 755 /home/prof/www
-            fi
-            
-            echo "✅ Home directory prof configurata correttamente!"
-        '
-        ;;
+        ;; 
     
     mysql-status)
         echo "🔍 Verifica stato MySQL/MariaDB..."
@@ -217,12 +171,7 @@ case "$1" in
         rm -rf "$BACKUP_DIR"
         echo "✅ Backup ripristinato!"
         ;;
-    
-    apply-quotas)
-        echo "💾 Applicazione quote disco (10MB per utente)..."
-        docker exec web4student /usr/local/bin/apply_quotas.sh
-        ;;
-    
+        
     check-quotas)
         echo "🔍 Verifica quote disco..."
         docker exec web4student repquota / 2>/dev/null || echo "⚠️ Sistema quote non attivo"
@@ -238,16 +187,7 @@ case "$1" in
         docker exec web4student setquota -u "$2" 8192 10240 0 0 /
         docker exec web4student quota -u "$2" 2>/dev/null || echo "⚠️ Impossibile verificare quota"
         ;;
-    
-    install-adminer)
-        echo "🗄️ Installazione Adminer per tutti gli utenti esistenti..."
-        docker exec web4student /usr/local/bin/install_adminer.sh
-        ;;
-    
-    remove-adminer)
-        echo "🧹 Rimozione link Adminer dalle directory utenti..."
-        docker exec web4student /usr/local/bin/remove_adminer_links.sh
-        ;;
+
     
     *)
         show_usage
