@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web4Student - Ambiente di Sviluppo per Studenti</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .infra-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+        
+        .infra-link:hover {
+            background: #5a67d8;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .feature-card h3 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        
+        .languages {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .lang-tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+        
+        .access-info {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .access-info h3 {
+            color: #17a2b8;
+            margin-top: 0;
+        }
+        
+        .code {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 5px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #28a745;
+            color: white;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 Web4Student</h1>
+            <p class="subtitle">Ambiente di Sviluppo Linux Completo per Studenti</p>
+            <a href="infrastruttura.html" class="infra-link">🏗️ Infrastruttura Tecnica</a>
+            <span class="status">🟢 ONLINE</span>
+        </header>
+
+        <section class="features">
+            <div class="feature-card">
+                <h3>🖥️ Sistema Linux Completo</h3>
+                <p>Distribuzione Ubuntu minimale ottimizzata per l'apprendimento della programmazione con accesso SSH completo e strumenti di sistema.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>🌐 Server Web Integrato</h3>
+                <p>Apache con supporto PHP per lo sviluppo web. Ogni studente ha la propria directory web accessibile tramite URL personalizzato.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>🗄️ Database MySQL/MariaDB con Adminer</h3>
+                <p>Database completo con accesso amministrativo e database personali per ogni studente. Include <strong>Adminer</strong> per gestione web-based dei database.</p>
+                <div style="margin-top: 10px; padding: 10px; background: #e8f4fd; border-radius: 5px;">
+                    <h4>🔧 Accesso ad Adminer:</h4>
+                    <ul style="margin: 5px 0; font-size: 0.9em;">
+                        <li><strong>Globale:</strong> <code>https://w4s.filippobilardo.it/adminer.php</code></li>
+                        <li><strong>Personale:</strong> <code>https://w4s.filippobilardo.it/~username/adminer.php</code></li>
+                        <li><strong>Server:</strong> localhost | <strong>Username:</strong> username | <strong>Database:</strong> db_username</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <h3>👥 Gestione Utenti Avanzata</h3>
+                <p>Sistema di account multipli con home directory isolate e permessi di sicurezza. Creazione automatica da file CSV.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>💻 Linguaggi e Tecnologie Supportati</h2>
+            <div class="languages">
+                <span class="lang-tag">C/C++</span>
+                <span class="lang-tag">Python 3</span>
+                <span class="lang-tag">Java 17</span>
+                <span class="lang-tag">JavaScript</span>
+                <span class="lang-tag">Node.js</span>
+                <span class="lang-tag">PHP</span>
+                <span class="lang-tag">HTML/CSS</span>
+                <span class="lang-tag">MySQL</span>
+                <span class="lang-tag">Adminer</span>
+                <span class="lang-tag">Git</span>
+                <span class="lang-tag">Apache</span>
+            </div>
+
+            <h3>🛠️ Strumenti di Sviluppo</h3>
+            <ul>
+                <li><strong>Compilatori</strong>: GCC, G++, Make, GDB, CMake</li>
+                <li><strong>Interpreti</strong>: Python 3, Node.js, PHP</li>
+                <li><strong>Java</strong>: OpenJDK 17, Maven, Gradle, Ant, Groovy</li>
+                <li><strong>Editor</strong>: Vim, Nano</li>
+                <li><strong>Utilità</strong>: Git, SSH, Curl, Wget, Htop, Tmux</li>
+                <li><strong>Educativo</strong>: Gnuplot, Octave</li>
+            </ul>
+        </section>
+
+        <div class="access-info">
+            <h3>🔐 Informazioni di Accesso</h3>
+            <p><strong>Pagina Web:</strong></p>
+            <div class="code">🌐 https://w4s.filippobilardo.it/</div>
+            
+            <p><strong>Accesso SSH:</strong></p>
+            <div class="code">🔑 ssh username@163.192.115.36 -p 2222</div>
+            <small>Password provvisoria: stud123</small>
+            
+            <p><strong>Database MySQL:</strong></p>
+            <div class="code">🗄️ mysql -h 163.192.115.36 -P 3307 -u username -p</div>
+            <small>Password database: stud123</small>
+            
+            <p><strong>Gestione Database (Adminer):</strong></p>
+            <div class="code">🌐 https://w4s.filippobilardo.it/adminer.php</div>
+            <div class="code">🏠 https://w4s.filippobilardo.it/~username/adminer.php</div>
+            <small>Server: localhost | Username: username | Database: db_username</small>
+            
+            <p><strong>Directory Studenti:</strong></p>
+            <div class="code">🌐 https://w4s.filippobilardo.it/~username</div>
+        </div>
+
+        <section>
+            <h2>📚 Per gli Studenti</h2>
+            <div class="feature-card">
+                <h3>🏠 La tua Area Personale</h3>
+                <p>Ogni studente ha:</p>
+                <ul>
+                    <li><strong>Home Directory</strong>: <code>/home/classe/cognome.nome</code></li>
+                    <li><strong>Directory Web</strong>: <code>~/www/</code></li>
+                    <li><strong>Sito Personale</strong>: <code>https://w4s.filippobilardo.it/~username</code></li>
+                    <li><strong>Database Personale</strong>: <code>db_username</code></li>
+                    <li><strong>Adminer Personale</strong>: <code>~/adminer.php</code> (gestione database)</li>
+                    <li><strong>Password Iniziale</strong>: <code>stud123</code> (da cambiare!)</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>🚀 Primo Accesso</h2>
+            <ol>
+                <li><strong>Connettiti via SSH</strong>: <code>ssh username@163.192.115.36 -p 2222</code></li>
+                <li><strong>Cambia la password</strong>: <code>passwd</code></li>
+                <li><strong>Esplora il sistema</strong>: <code>ls -la</code></li>
+                <li><strong>Directory web</strong>: <code>cd ~/www</code></li>
+                <li><strong>Modifica il sito</strong>: <code>nano index.html</code></li>
+                <li><strong>Gestisci database</strong>: Accedi ad Adminer tramite <code>~/adminer.php</code></li>
+            </ol>
+        </section>
+
+        <div class="footer">
+            <p>🎓 <strong>Web4Student</strong> - Ambiente di sviluppo educativo</p>
+            <p>Versione 1.0 | Sistema basato su Ubuntu 22.04 | Container Docker</p>
+            <small>Per supporto tecnico, consulta la documentazione o contatta l'amministratore</small>
+        </div>
+    </div>
+
+    <script>
+        // Aggiunge la data/ora corrente
+        document.addEventListener('DOMContentLoaded', function() {
+            const footer = document.querySelector('.footer');
+            const date = new Date().toLocaleString('it-IT');
+            footer.innerHTML += `<br><small>Ultimo accesso: ${date}</small>`;
+        });
+
+        // Check status dei servizi (simulato)
+        setTimeout(function() {
+            const status = document.querySelector('.status');
+            status.innerHTML = '🟢 SERVIZI ATTIVI';
+        }, 1000);
+    </script>
+</body>
+</html>

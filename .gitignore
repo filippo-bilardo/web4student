@@ -1,0 +1,42 @@
+# Dati sensibili e di grandi dimensioni - NON CARICARE SU GIT
+volumes/home/
+volumes/mysql_data/
+
+# File di log
+*.log
+volumes/logs/
+
+# File temporanei
+*.tmp
+*.swp
+*.bak
+
+# Database SQLite (se presente)
+*.db
+*.sqlite
+*.sqlite3
+
+# Chiavi SSH e certificati
+*.key
+*.pem
+*.crt
+
+# File di configurazione locali
+.env
+.env.local
+
+# Directory di backup
+backup_*.tar.gz
+*.tar.gz
+
+# Cache e file temporanei di sistema
+.cache/
+tmp/
+temp/
+
+# File di sistema macOS
+.DS_Store
+Thumbs.db
+
+# Log di Docker
+docker-compose.override.yml

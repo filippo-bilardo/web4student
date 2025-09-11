@@ -1,0 +1,212 @@
+# ===========================================================================
+# WEB4STUDENT - DOCKER COMPOSE CONFIGURATION
+# ===========================================================================
+# Container Linux educativo per studenti con ambiente di sviluppo completo
+# Include server web Apache, database MySQL, SSH e linguaggi di programmazione
+# 
+# SERVIZI INCLUSI:
+# - Apache HTTP Server (porta 8080)
+# - SSH Server (porta 2222)  
+# - MySQL/MariaDB (porta 3307)
+# - Ambiente sviluppo: C/C++, Python, Java, JavaScript, PHP
+# - Directory web personali per studenti
+# 
+# VOLUMI PERSISTENTI:
+# - Home directory studenti
+# - Database MySQL
+# - Log Apache
+# - Configurazioni personalizzate
+# ===========================================================================
+
+# Versione Docker Compose (compatibile con Docker Engine 19.03.0+)
+
+services:
+  # ===========================================================================
+  # SERVIZIO PRINCIPALE: WEB4STUDENT
+  # ===========================================================================
+  web4student:
+    # Costruisce l'immagine dal Dockerfile nella directory corrente
+    build: .
+    
+    # Nome fisso del container per facilità di gestione
+    container_name: web4student
+    
+    # Hostname interno del container
+    hostname: web4student
+    
+    # Politica di riavvio: riavvia sempre tranne quando fermato manualmente
+    restart: unless-stopped
+    
+    # ===========================================================================
+    # ESPOSIZIONE PORTE INTERNE - Routing gestito da nginx-proxy-manager
+    # ===========================================================================
+    # Le porte sono esposte solo internamente alla rete Docker
+    # Il routing HTTP/HTTPS è gestito da nginx-proxy-manager
+    # Solo SSH è esposto direttamente sull'host per accesso diretto
+    ports:
+      # SSH: porta 22 del container -> porta 2222 dell'host
+      # Connessione diretta: ssh username@localhost -p 2222
+      - "2222:22"
+    
+    # Porte esposte internamente (non mappate sull'host):
+    # - 80: HTTP Apache (routing via nginx)
+    # - 443: HTTPS Apache (routing via nginx) 
+    # - 3000: Node.js applications (routing via nginx)
+    # - 3306: MySQL/MariaDB (accesso interno container)
+    expose:
+      - "80"     # HTTP per nginx-proxy-manager
+      - "443"    # HTTPS per nginx-proxy-manager
+      - "3000"   # Node.js per nginx-proxy-manager
+      - "3306"   # MySQL per accesso interno
+    
+    # ===========================================================================
+    # ETICHETTE PER NGINX PROXY MANAGER - Configurazione automatica routing
+    # ===========================================================================
+    # Etichette per configurazione automatica del reverse proxy
+    labels:
+      # Abilita il reverse proxy per questo container
+      - "traefik.enable=true"
+      
+      # Configurazione per servizio web principale (porta 80)
+      - "nginx.web4student.frontend.host=web4student.local"
+      - "nginx.web4student.frontend.port=80"
+      
+      # Configurazione per servizio Node.js (porta 3000)
+      - "nginx.nodejs.frontend.host=nodejs.web4student.local"
+      - "nginx.nodejs.frontend.port=3000"
+      
+      # Network interno per comunicazione con nginx-proxy-manager
+      - "nginx.docker.network=nginx-proxy"
+    
+    # ===========================================================================
+    # VOLUMI PERSISTENTI - Dati che sopravvivono al riavvio del container
+    # ===========================================================================
+    volumes:
+      # VOLUME 1: Home directory degli studenti
+      # Monta ./volumes/home dell'host su /home del container
+      # Modalità: lettura/scrittura per permettere creazione account e file
+      - ./volumes/home:/home:rw
+      
+      # VOLUME 2: Dati database MySQL
+      # Monta ./volumes/mysql_data dell'host su /var/lib/mysql del container
+      # Preserva database, tabelle e dati anche dopo ricreazione container
+      - ./volumes/mysql_data:/var/lib/mysql:rw
+      
+      # VOLUME 3: Log del server Apache
+      # Monta ./volumes/logs dell'host su /var/log/apache2 del container
+      # Utile per debugging e monitoraggio accessi web
+      #- ./volumes/logs:/var/log/apache2:rw
+      
+      # VOLUME 4: Configurazioni personalizzate
+      # Monta ./volumes/config dell'host su /etc/config del container
+      # Solo lettura: per file di configurazione che non devono essere modificati
+      #- ./volumes/config:/etc/config:ro
+      
+      # VOLUME 5: File CSV studenti per creazione automatica account
+      # Monta ./students.csv dell'host su /home/students.csv del container
+      - ./volumes/students.csv:/home/students.csv
+
+    # ===========================================================================
+    # VARIABILI D'AMBIENTE - Configurazione runtime del container
+    # ===========================================================================
+    environment:
+      # TIMEZONE: Imposta il fuso orario del sistema
+      # Importante per log e timestamp corretti
+      - TZ=Europe/Rome
+      
+      # MYSQL CONFIGURAZIONE: Password e utenti database
+      # Utilizzate dagli script di inizializzazione
+      - MYSQL_ROOT_PASSWORD=root123    # Password utente root MySQL
+      - MYSQL_USER=admin               # Nome utente amministratore
+      - MYSQL_PASSWORD=admin123        # Password utente amministratore
+      
+      # APACHE CONFIGURAZIONE: Utente e gruppo per il web server
+      # Definisce con quali permessi gira Apache
+      - APACHE_RUN_USER=www-data       # Utente Apache (standard Debian/Ubuntu)
+      - APACHE_RUN_GROUP=www-data      # Gruppo Apache (standard Debian/Ubuntu)
+    
+    # ===========================================================================
+    # CAPACITÀ AGGIUNTIVE - Permessi speciali per il container
+    # ===========================================================================
+    # SYS_ADMIN: Necessario per alcune operazioni di sistema avanzate
+    # come montaggio filesystem, gestione utenti, configurazioni di rete
+    cap_add:
+      - SYS_ADMIN
+    
+    # ===========================================================================
+    # LIMITI RISORSE - Controllo utilizzo CPU e memoria
+    # ===========================================================================
+    # Importante in ambiente multi-utente per evitare che un container
+    # monopolizzi le risorse del sistema host
+    deploy:
+      resources:
+        # LIMITI MASSIMI: Risorse che il container non può superare
+        limits:
+          memory: 2G        # Massimo 2GB di RAM
+          cpus: '1.0'       # Massimo 1 CPU core
+        
+        # RISORSE RISERVATE: Risorse garantite al container
+        reservations:
+          memory: 512M      # Minimo 512MB di RAM garantiti
+          cpus: '0.5'       # Minimo 0.5 CPU core garantiti
+    
+    # ===========================================================================
+    # HEALTH CHECK - Monitoraggio stato del container
+    # ===========================================================================
+    # Verifica automaticamente che il container sia funzionante
+    # testando la risposta del server web Apache
+    healthcheck:
+      # COMANDO TEST: Tenta connessione HTTP al localhost
+      test: ["CMD", "curl", "-f", "http://localhost"] 
+      
+      # INTERVALLO: Ogni quanto eseguire il test (30 secondi)
+      interval: 30s
+      
+      # TIMEOUT: Tempo massimo attesa risposta (10 secondi)
+      timeout: 10s
+      
+      # RETRY: Numero tentativi falliti prima di marcare come unhealthy
+      retries: 3
+      
+      # START PERIOD: Tempo attesa prima del primo test (40 secondi)
+      # Permette ai servizi di avviarsi completamente
+      start_period: 40s
+    
+    # ===========================================================================
+    # RETE NGINX PROXY - Integrazione con nginx-proxy-manager
+    # ===========================================================================
+    # Utilizza la rete condivisa con nginx-proxy-manager
+    # per permettere il routing automatico del traffico HTTP/HTTPS
+    networks:
+      - nginx-proxy-network
+
+# ===========================================================================
+# CONFIGURAZIONE RETI DOCKER
+# ===========================================================================
+# Definisce le reti utilizzate dal servizio
+networks:
+  # RETE ESTERNA: Condivisa con nginx-proxy-manager
+  nginx-proxy-network:
+    external: true
+
+# ===========================================================================
+# CONFIGURAZIONE VOLUMI DOCKER
+# ===========================================================================
+# Definisce i volumi nominali per la persistenza dei dati
+# Alternativa ai bind mount per maggiore portabilità
+volumes:
+  # VOLUME 1: Dati home directory studenti
+  home_data:
+    driver: local           # Driver locale (filesystem host)
+    driver_opts:
+      type: none           # Tipo di mount: bind mount
+      o: bind              # Opzioni: bind mount
+      device: ./volumes/home  # Directory host da montare
+      
+  # VOLUME 2: Dati database MySQL/MariaDB
+  mysql_data:
+    driver: local           # Driver locale (filesystem host)  
+    driver_opts:
+      type: none           # Tipo di mount: bind mount
+      o: bind              # Opzioni: bind mount
+      device: ./volumes/mysql_data  # Directory host da montare
