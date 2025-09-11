@@ -145,9 +145,9 @@ Questa checklist ti guida attraverso **4 fasi principali**:
   ```
 - [ ] **Connessione studente (se creato)**
   ```bash
-  ssh mrossi@localhost -p 2222
+  ssh rossi.marco@localhost -p 2222
   # Password: student123
-  pwd  # Dovrebbe mostrare: /home/3A/mrossi.rossi
+  pwd  # Dovrebbe mostrare: /home/3A/Rossi.Marco
   passwd  # Cambia da student123
   exit
   ```
