@@ -2,6 +2,15 @@
 
 # Script per creare account studenti da file CSV
 # Formato CSV: classe,cognome,nome,username
+#
+# 🔒 MISURE DI SICUREZZA IMPLEMENTATE:
+# - File CSV protetto (chmod 600, chown root:root)
+# - Home directory: chmod 755 + rimozione lettura "others" (sicurezza ibrida)
+# - Directory classi: chmod 750 (proprietario + gruppo)
+# - File web: chmod 644 per TUTTI i file (HTML, PHP, immagini, CSS, JS, etc.)
+# - Apache può servire file web ma utenti non possono leggere directory altrui
+# - Directory prof: protetta automaticamente
+# - Utenti esistenti: permessi corretti automaticamente
 
 CSV_FILE="$1"
 
@@ -12,6 +21,11 @@ if [ ! -f "$CSV_FILE" ]; then
 fi
 
 echo "👥 Creazione account studenti da $CSV_FILE"
+
+# 🔒 SICUREZZA: Protegge il file CSV dagli studenti
+chown root:root "$CSV_FILE"
+chmod 600 "$CSV_FILE"
+echo "🔐 File CSV protetto: solo root può accedere"
 
 # Salta l'header del CSV se presente
 tail -n +2 "$CSV_FILE" | while IFS=',' read -r classe cognome nome username; do
@@ -63,7 +77,7 @@ tail -n +2 "$CSV_FILE" | while IFS=',' read -r classe cognome nome username; do
     WWW_DIR="$USER_HOME/www"
     mkdir -p "$WWW_DIR"
     
-    # Crea una pagina web di esempio
+    # Crea una pagina web di esempio con CSS e JS
     cat > "$WWW_DIR/index.html" << EOF
 <!DOCTYPE html>
 <html lang="it">
@@ -71,34 +85,91 @@ tail -n +2 "$CSV_FILE" | while IFS=',' read -r classe cognome nome username; do
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>$nome $cognome - Classe $classe</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <h1>Benvenuto/a $nome $cognome!</h1>
     <p>Questa è la tua area web personale.</p>
     <p>Classe: $classe</p>
     <p>Username: $username</p>
-    <hr>
-    <h2>🛠️ Strumenti Disponibili</h2>
-    <ul>
-        <li><a href="adminer.php" target="_blank">🗄️ Adminer Personale</a></li>
-        <li><a href="/adminer.php" target="_blank">🌐 Adminer Globale</a></li>
-        <li><a href="info.php" target="_blank">ℹ️ Informazioni PHP</a></li>
-    </ul>
+    
+    <div class="example-section">
+        <h2>🛠️ Strumenti Disponibili</h2>
+        <ul>
+            <li><a href="adminer.php" target="_blank">🗄️ Adminer Personale</a></li>
+            <li><a href="/adminer.php" target="_blank">🌐 Adminer Globale</a></li>
+            <li><a href="info.php" target="_blank">ℹ️ Informazioni PHP</a></li>
+            <li><a href="style.css" target="_blank">📄 Foglio CSS</a></li>
+            <li><a href="script.js" target="_blank">🔧 JavaScript</a></li>
+        </ul>
+    </div>
+    
+    <div class="example-section">
+        <h2>📁 Tipi di File Supportati</h2>
+        <p>Il tuo sito web supporta tutti questi tipi di file:</p>
+        <ul>
+            <li>📄 HTML (.html) - Pagine web</li>
+            <li>🐘 PHP (.php) - Scripting server-side</li>
+            <li>🎨 CSS (.css) - Fogli di stile</li>
+            <li>⚡ JavaScript (.js) - Scripting client-side</li>
+            <li>🖼️ Immagini (.jpg, .png, .gif, .svg)</li>
+            <li>📋 Documenti (.txt, .pdf)</li>
+            <li>⚙️ Configurazioni (.xml, .json)</li>
+        </ul>
+    </div>
+    
     <hr>
     <p>Puoi modificare questo file per creare il tuo sito web.</p>
     <p>File location: ~/www/index.html</p>
+    
+    <script src="script.js"></script>
 </body>
 </html>
 EOF
     
-    # Crea un esempio PHP
-    cat > "$WWW_DIR/info.php" << EOF
-<?php
-echo "<h2>Informazioni PHP</h2>";
-echo "<p>Utente: $username</p>";
-echo "<p>Data: " . date('Y-m-d H:i:s') . "</p>";
-phpinfo();
-?>
+    # Crea un esempio CSS per dimostrare il supporto
+    cat > "$WWW_DIR/style.css" << EOF
+/* Foglio di stile di esempio */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+}
+
+.example-section {
+    background: white;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+EOF
+
+    # Crea un esempio JavaScript
+    cat > "$WWW_DIR/script.js" << EOF
+// JavaScript di esempio
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('JavaScript caricato correttamente!');
+    
+    // Aggiunge data e ora corrente
+    const now = new Date();
+    const timeString = now.toLocaleString('it-IT');
+    
+    const footer = document.querySelector('body');
+    if (footer) {
+        const timeDiv = document.createElement('div');
+        timeDiv.innerHTML = '<hr><small>Pagina caricata il: ' + timeString + '</small>';
+        footer.appendChild(timeDiv);
+    }
+});
 EOF
     
     # Crea link simbolico ad Adminer (invece di copiarlo)
@@ -128,6 +199,15 @@ Per sviluppo web, modifica i file in ~/www/
 - info.php: esempio PHP
 - adminer.php: gestione database MySQL
 
+File supportati nella directory web:
+- Pagine HTML (.html, .htm)
+- Script PHP (.php)
+- Fogli di stile CSS (.css)
+- JavaScript (.js)
+- Immagini (.jpg, .png, .gif, .svg, .ico)
+- Documenti (.txt, .pdf, .doc, .docx)
+- File di configurazione (.htaccess, .xml, .json)
+
 Linguaggi disponibili:
 - C/C++: gcc, g++, make, gdb
 - Python: python3, pip
@@ -156,20 +236,36 @@ EOF
     # Imposta i permessi corretti per Apache userdir
     # Le directory devono essere accessibili da www-data per il modulo userdir
     chown -R "$username:$username" "$USER_HOME"
-    chmod 755 "$USER_HOME"                    # Home directory accessibile da Apache
-    chmod 755 "$WWW_DIR"                      # Directory www accessibile  
-    chmod 755 "$WWW_DIR"/*                    # File web eseguibili (per PHP)
+    
+    # 🔒 SICUREZZA IBRIDA: Permessi che bilanciano sicurezza e funzionalità Apache
+    # Home directory: 755 per permettere ad Apache di attraversare, ma con controlli aggiuntivi
+    chmod 755 "$USER_HOME"                    # Apache può attraversare
+    
+    # Directory classe: 750 (solo proprietario e gruppo classe)
+    chmod 750 "$CLASS_DIR"                    # Più sicura delle home
+    
+    # File web: accessibili da Apache
+    chmod 755 "$WWW_DIR"                      # Apache può servire
+    chmod 644 "$WWW_DIR"/*                    # File leggibili da Apache
     chmod 644 "$USER_HOME/README.txt"         # README leggibile
     
-    # Imposta permessi di attraversamento per le directory padre e accesso www-data
-    chmod 755 "$CLASS_DIR"                    # Directory classe accessibile
+    # 🔒 PROTEZIONE AGGIUNTIVA: Impedisce lettura directory da altri utenti
+    # Rimuove il permesso di lettura per "others" mantenendo esecuzione per Apache
+    chmod o-r "$USER_HOME"                    # Rimuove lettura da altri utenti
+    chmod o-r "$WWW_DIR"                      # Protegge anche directory web
     
     # Aggiunge l'utente al gruppo www-data per compatibilità con Apache
     usermod -a -G www-data "$username"
     
-    # Imposta permessi specifici per i file PHP
-    find "$WWW_DIR" -name "*.php" -exec chmod 644 {} \;
-    find "$WWW_DIR" -name "*.html" -exec chmod 644 {} \;
+    # 🔒 SICUREZZA: Imposta permessi specifici per i file web (leggibili da Apache)
+    # Tutti i file nella directory web devono essere leggibili da Apache
+    find "$WWW_DIR" -type f -exec chmod 644 {} \;  # Tutti i file: leggibili da Apache
+    find "$WWW_DIR" -name "*.php" -exec chmod 644 {} \;   # PHP specifico
+    find "$WWW_DIR" -name "*.html" -exec chmod 644 {} \;  # HTML specifico
+    
+    # 📁 SUPPORTO FILE MULTIMEDIALI: Assicura che immagini e altri file siano accessibili
+    # Apache può servire: .jpg, .png, .gif, .css, .js, .txt, .pdf, etc.
+    echo "  📸 Tutti i file web sono accessibili da Apache (immagini, CSS, JS, etc.)"
     
     # Crea database personale per l'utente
     mysql -u root -e "CREATE DATABASE IF NOT EXISTS db_$username;"
@@ -183,6 +279,42 @@ EOF
     echo "   🗄️ Database: db_$username"
 done
 
+# 🔒 SICUREZZA FINALE: Protegge directory di sistema e utenti esistenti
+echo ""
+echo "🔐 Applicando misure di sicurezza finali..."
+
+# Protegge la home directory del prof se esiste
+if [ -d "/home/prof" ]; then
+    chown -R prof:prof /home/prof
+    # Approccio ibrido anche per prof: 755 + rimozione lettura others
+    chmod 755 /home/prof
+    chmod o-r /home/prof
+    echo "🔐 Home directory prof protetta (ibrida)"
+fi
+
+# Protegge altre directory utente esistenti
+find /home -maxdepth 2 -type d -name '[0-9]*' 2>/dev/null | while read class_dir; do
+    if [ -d "$class_dir" ]; then
+        chmod 750 "$class_dir" 2>/dev/null || true
+        echo "🔐 Directory classe protetta: $class_dir"
+    fi
+done
+
+# Protegge home directory esistenti degli studenti (approccio ibrido)
+find /home -maxdepth 3 -type d -name '*.*' 2>/dev/null | while read user_dir; do
+    if [ -d "$user_dir" ] && [ "$user_dir" != "/home/prof" ]; then
+        # Trova il proprietario della directory
+        owner=$(stat -c '%U' "$user_dir" 2>/dev/null)
+        if [ "$owner" != "root" ] && [ "$owner" != "www-data" ]; then
+            # Approccio ibrido: 755 + rimozione lettura others
+            chmod 755 "$user_dir" 2>/dev/null || true
+            chmod o-r "$user_dir" 2>/dev/null || true
+            echo "🔐 Home directory protetta (ibrida): $user_dir ($owner)"
+        fi
+    fi
+done
+
 echo ""
 echo "🎉 Creazione account completata!"
 echo "📋 Ricorda agli studenti di cambiare la password iniziale: student123"
+echo "🔒 Tutte le directory sono state protette con permessi sicuri"

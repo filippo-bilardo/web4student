@@ -40,9 +40,9 @@ if [ -x /usr/local/bin/configure_user_aliases.sh ]; then
 fi
 
 echo "✅ Web4Student è pronto!"
-echo "🌐 Server web: http://localhost"
-echo "🔑 SSH: ssh username@localhost -p 2222"
-echo "🗄️ Database: mysql -h localhost -P 3307 -u admin -p (password: admin123)"
+echo "🌐 Server web: https://w4s.filippobilardo.it/"
+echo "🔑 SSH: ssh username@163.192.115.36 -p 2222"
+echo "🗄️ Database: mysql -h 163.192.115.36 -P 3307 -u username -p (password: student123)"
 
 # Mantiene il container in esecuzione
 tail -f /var/log/apache2/access.log /var/log/apache2/error.log
