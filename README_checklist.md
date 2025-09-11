@@ -63,8 +63,8 @@ Questa checklist ti guida attraverso **4 fasi principali**:
   # Crea students.csv se necessario
   cat > volumes/students.csv << EOF
   classe,cognome,nome,username
-  3A,Rossi,Marco,mrossi
-  3A,Bianchi,Giulia,gbianchi
+  3A,Rossi,Marco,rossi.mario
+  3A,Bianchi,Giulia,bianchi.giulia
   EOF
   ```
 - [ ] **Verifica permessi directory**

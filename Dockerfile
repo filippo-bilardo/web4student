@@ -154,18 +154,16 @@ RUN a2enmod php8.1
 # Gli studenti potranno accedere ai loro siti su http://server/~username
 
 # Crea la configurazione corretta per userdir sostituendo il file predefinito
-RUN cat > /etc/apache2/mods-available/userdir.conf << 'EOF'
-<IfModule mod_userdir.c>
-    UserDir www
-    UserDir disabled root
-
-    <Directory /home/*/www>
-        AllowOverride All
-        Options Indexes FollowSymLinks MultiViews
-        Require all granted
-    </Directory>
-</IfModule>
-EOF
+RUN echo '<IfModule mod_userdir.c>' > /etc/apache2/mods-available/userdir.conf && \
+    echo '    UserDir www' >> /etc/apache2/mods-available/userdir.conf && \
+    echo '    UserDir disabled root' >> /etc/apache2/mods-available/userdir.conf && \
+    echo '' >> /etc/apache2/mods-available/userdir.conf && \
+    echo '    <Directory /home/*/*/www>' >> /etc/apache2/mods-available/userdir.conf && \
+    echo '        AllowOverride All' >> /etc/apache2/mods-available/userdir.conf && \
+    echo '        Options Indexes FollowSymLinks MultiViews' >> /etc/apache2/mods-available/userdir.conf && \
+    echo '        Require all granted' >> /etc/apache2/mods-available/userdir.conf && \
+    echo '    </Directory>' >> /etc/apache2/mods-available/userdir.conf && \
+    echo '</IfModule>' >> /etc/apache2/mods-available/userdir.conf
 
 # ===========================================================================
 # CONFIGURAZIONE MYSQL/MARIADB - Setup database con utenti amministrativi

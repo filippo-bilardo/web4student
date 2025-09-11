@@ -238,21 +238,23 @@ EOF
     chown -R "$username:$username" "$USER_HOME"
     
     # 🔒 SICUREZZA IBRIDA: Permessi che bilanciano sicurezza e funzionalità Apache
-    # Home directory: 755 per permettere ad Apache di attraversare, ma con controlli aggiuntivi
-    chmod 755 "$USER_HOME"                    # Apache può attraversare
+    # Directory classi: 755 (Apache deve poter attraversare per userdir)
+    chmod 755 "$CLASS_DIR"                    # Apache può attraversare
     
-    # Directory classe: 750 (solo proprietario e gruppo classe)
-    chmod 750 "$CLASS_DIR"                    # Più sicura delle home
+    # Directory home: 755 completo (Apache deve poter servire userdir)
+    chmod 755 "$USER_HOME"                    # Apache può attraversare completamente
+    
+    # Directory www: 755 completo (Apache deve poter servire)
+    chmod 755 "$WWW_DIR"                      # Apache può servire completamente
     
     # File web: accessibili da Apache
-    chmod 755 "$WWW_DIR"                      # Apache può servire
     chmod 644 "$WWW_DIR"/*                    # File leggibili da Apache
     chmod 644 "$USER_HOME/README.txt"         # README leggibile
     
-    # 🔒 PROTEZIONE AGGIUNTIVA: Impedisce lettura directory da altri utenti
+    # 🔒 PROTEZIONE FILE: Impedisce lettura directory da altri utenti
     # Rimuove il permesso di lettura per "others" mantenendo esecuzione per Apache
-    chmod o-r "$USER_HOME"                    # Rimuove lettura da altri utenti
-    chmod o-r "$WWW_DIR"                      # Protegge anche directory web
+    chmod o-r "$USER_HOME"                    # Protegge directory home
+    chmod o-r "$WWW_DIR"                      # Protegge directory web
     
     # Aggiunge l'utente al gruppo www-data per compatibilità con Apache
     usermod -a -G www-data "$username"
@@ -295,21 +297,20 @@ fi
 # Protegge altre directory utente esistenti
 find /home -maxdepth 2 -type d -name '[0-9]*' 2>/dev/null | while read class_dir; do
     if [ -d "$class_dir" ]; then
-        chmod 750 "$class_dir" 2>/dev/null || true
+        chmod 755 "$class_dir" 2>/dev/null || true
         echo "🔐 Directory classe protetta: $class_dir"
     fi
 done
 
-# Protegge home directory esistenti degli studenti (approccio ibrido)
+# Protegge home directory esistenti degli studenti
 find /home -maxdepth 3 -type d -name '*.*' 2>/dev/null | while read user_dir; do
     if [ -d "$user_dir" ] && [ "$user_dir" != "/home/prof" ]; then
         # Trova il proprietario della directory
         owner=$(stat -c '%U' "$user_dir" 2>/dev/null)
         if [ "$owner" != "root" ] && [ "$owner" != "www-data" ]; then
-            # Approccio ibrido: 755 + rimozione lettura others
+            # Permessi completi per Apache userdir
             chmod 755 "$user_dir" 2>/dev/null || true
-            chmod o-r "$user_dir" 2>/dev/null || true
-            echo "🔐 Home directory protetta (ibrida): $user_dir ($owner)"
+            echo "🔐 Home directory protetta (userdir): $user_dir ($owner)"
         fi
     fi
 done
