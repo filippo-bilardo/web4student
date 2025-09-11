@@ -2,6 +2,11 @@
 volumes/home/
 volumes/mysql_data/
 
+# File di dati studenti - DATI SENSIBILI
+volumes/students.csv
+volumes/students*.csv
+*students*.csv
+
 # File di log
 *.log
 volumes/logs/
