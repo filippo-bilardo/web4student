@@ -47,12 +47,9 @@ services:
       # SSH: porta 22 del container -> porta 2222 dell'host
       # Connessione diretta: ssh username@localhost -p 2222
       - "2222:22"
-    
-    # Porte esposte internamente (non mappate sull'host):
-    # - 80: HTTP Apache (routing via nginx)
-    # - 443: HTTPS Apache (routing via nginx) 
-    # - 3000: Node.js applications (routing via nginx)
-    # - 3306: MySQL/MariaDB (accesso interno container)
+      - "8080:80"   # se si decide di aprire direttamente la porta 8080 dell'host
+      - "3030:3000" # se si decide di aprire direttamente la porta 3030 dell'host
+
     expose:
       - "80"     # HTTP per nginx-proxy-manager
       - "443"    # HTTPS per nginx-proxy-manager
