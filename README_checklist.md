@@ -239,7 +239,7 @@ Questa checklist ti guida attraverso **4 fasi principali**:
 #### 🔴 Container non si avvia
 - [ ] **Verifica porte occupate**
   ```bash
-  netstat -tlnp | grep -E ':(8080|8443|2222|3307)'
+  netstat -tlnp | grep -E ':(80|443|22|3306|8080|8443|2222|3000|3030|3307)'
   # Se occupate, cambia porte in docker-compose.yml
   ```
 - [ ] **Log di avvio**
