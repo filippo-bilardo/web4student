@@ -95,11 +95,6 @@ service ssh start
 echo "🌐 Avvio del server web Apache..."
 service apache2 start
 
-# Inizializza e abilita le quote disco
-echo "💾 Inizializzazione quote disco..."
-quotacheck -cum / 2>/dev/null || true
-quotaon / 2>/dev/null || true
-
 # Verifica se esistono utenti da creare
 if [ -f /home/students.csv ]; then
     echo "👥 Trovato file students.csv, creazione account studenti..."

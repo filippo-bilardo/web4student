@@ -4,175 +4,864 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Web4Student - Ambiente di Sviluppo per Studenti</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            margin: 0;
-            padding: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #333;
+            overflow-x: hidden;
         }
-        
-        .container {
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 15px 0;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+        }
+
+        .nav-container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: #667eea;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .status-badge {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .hero {
+            padding: 120px 20px 80px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero p {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: -40px auto 0;
             padding: 20px;
             background: white;
-            margin-top: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 10;
         }
-        
-        header {
+
+        .section {
+            margin: 60px 0;
+            padding: 40px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #667eea;
+            margin-bottom: 40px;
         }
-        
-        .infra-link {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 8px 16px;
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 20px;
-            font-size: 0.9em;
-            transition: background 0.3s;
-        }
-        
-        .infra-link:hover {
-            background: #5a67d8;
-        }
-        
-        h1 {
-            color: #667eea;
+
+        .section-header h2 {
             font-size: 2.5em;
+            color: #333;
             margin-bottom: 10px;
+            position: relative;
         }
-        
-        .subtitle {
+
+        .section-header h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .section-header p {
             color: #666;
-            font-size: 1.2em;
-            margin-bottom: 20px;
+            font-size: 1.1em;
+            max-width: 600px;
+            margin: 0 auto;
         }
-        
+
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
         }
-        
+
         .feature-card {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
         .feature-card h3 {
-            color: #667eea;
-            margin-top: 0;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        
+
+        .feature-card .icon {
+            font-size: 1.8em;
+            color: #667eea;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .adminer-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 100%);
+            border-radius: 10px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .adminer-info h4 {
+            color: #17a2b8;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .adminer-info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .adminer-info li {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
         .languages {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            margin: 20px 0;
+            gap: 15px;
+            justify-content: center;
+            margin: 40px 0;
         }
-        
+
         .lang-tag {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lang-tag::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .lang-tag:hover::before {
+            left: 100%;
+        }
+
+        .lang-tag:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .tool-category {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .tool-category h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .tool-category ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tool-category li {
+            padding: 5px 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .tool-category li::before {
+            content: '✓';
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .access-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 50px 30px;
+            border-radius: 15px;
+            margin: 40px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .access-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="60" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></svg>');
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .access-section h3 {
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .access-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .access-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .access-item h4 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 8px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9em;
+            word-break: break-all;
+        }
+
+        .code:hover {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .student-guide {
+            background: #f8f9fa;
+            padding: 40px;
+            border-radius: 15px;
+            margin: 40px 0;
+        }
+
+        .student-guide h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .guide-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .guide-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .guide-item h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .guide-item p {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .steps {
+            counter-reset: step-counter;
+            margin: 30px 0;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateX(10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -15px;
+            top: 20px;
             background: #667eea;
             color: white;
-            padding: 5px 12px;
-            border-radius: 15px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
             font-size: 0.9em;
         }
-        
-        .access-info {
-            background: #e8f4f8;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #17a2b8;
-        }
-        
-        .access-info h3 {
-            color: #17a2b8;
-            margin-top: 0;
-        }
-        
-        .code {
-            background: #f4f4f4;
-            padding: 10px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            margin: 5px 0;
-        }
-        
+
         .footer {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 50px 0 30px;
             text-align: center;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer h3 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .footer p {
+            margin: 10px 0;
+            opacity: 0.8;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .footer-link:hover {
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .footer-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: #667eea;
+            transition: width 0.3s ease;
+        }
+
+        .footer-link:hover::after {
+            width: 100%;
+        }
+
+        .copyright {
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid #ddd;
-            color: #666;
-        }
-        
-        .status {
-            display: inline-block;
-            padding: 5px 10px;
-            background: #28a745;
-            color: white;
-            border-radius: 3px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5em;
+            }
+
+            .hero p {
+                font-size: 1.1em;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .access-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .languages {
+                justify-content: center;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero {
+                padding: 100px 20px 60px;
+            }
+
+            .container {
+                margin-top: -20px;
+                border-radius: 15px 15px 0 0;
+            }
+
+            .section {
+                margin: 40px 0;
+                padding: 30px 0;
+            }
+
+            .feature-card {
+                padding: 20px;
+            }
+
+            .lang-tag {
+                padding: 8px 16px;
+                font-size: 0.8em;
+            }
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <i class="fas fa-graduation-cap"></i>
+                Web4Student
+            </a>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Funzionalità</a>
+                <a href="#languages" class="nav-link">Tecnologie</a>
+                <a href="#access" class="nav-link">Accesso</a>
+                <a href="#guide" class="nav-link">Guida</a>
+                <a href="infrastruttura.html" class="nav-link">Infrastruttura</a>
+                <span class="status-badge" id="statusBadge">🟢 ONLINE</span>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
             <h1>🎓 Web4Student</h1>
-            <p class="subtitle">Ambiente di Sviluppo Linux Completo per Studenti</p>
-            <a href="infrastruttura.html" class="infra-link">🏗️ Infrastruttura Tecnica</a>
-            <span class="status">🟢 ONLINE</span>
-        </header>
+            <p>Ambiente di Sviluppo Linux Completo per Studenti</p>
+            <div class="hero-buttons">
+                <a href="#access" class="btn btn-primary">
+                    <i class="fas fa-play"></i> Inizia Ora
+                </a>
+                <a href="infrastruttura.html" class="btn btn-secondary">
+                    <i class="fas fa-cogs"></i> Infrastruttura
+                </a>
+            </div>
+        </div>
+    </section>
 
-        <section class="features">
-            <div class="feature-card">
-                <h3>🖥️ Sistema Linux Completo</h3>
-                <p>Distribuzione Ubuntu minimale ottimizzata per l'apprendimento della programmazione con accesso SSH completo e strumenti di sistema.</p>
+    <div class="container">
+        <section id="features" class="section">
+            <div class="section-header">
+                <h2>🚀 Funzionalità Principali</h2>
+                <p>Scopri tutto quello che Web4Student offre per il tuo apprendimento</p>
             </div>
 
-            <div class="feature-card">
-                <h3>🌐 Server Web Integrato</h3>
-                <p>Apache con supporto PHP per lo sviluppo web. Ogni studente ha la propria directory web accessibile tramite URL personalizzato.</p>
-            </div>
-
-            <div class="feature-card">
-                <h3>🗄️ Database MySQL/MariaDB con Adminer</h3>
-                <p>Database completo con accesso amministrativo e database personali per ogni studente. Include <strong>Adminer</strong> per gestione web-based dei database.</p>
-                <div style="margin-top: 10px; padding: 10px; background: #e8f4fd; border-radius: 5px;">
-                    <h4>🔧 Accesso ad Adminer:</h4>
-                    <ul style="margin: 5px 0; font-size: 0.9em;">
-                        <li><strong>Globale:</strong> <code>https://w4s.filippobilardo.it/adminer.php</code></li>
-                        <li><strong>Personale:</strong> <code>https://w4s.filippobilardo.it/~username/adminer.php</code></li>
-                        <li><strong>Server:</strong> localhost | <strong>Username:</strong> username | <strong>Database:</strong> db_username</li>
-                    </ul>
+            <div class="features">
+                <div class="feature-card">
+                    <h3><span class="icon">🖥️</span> Sistema Linux Completo</h3>
+                    <p>Distribuzione Ubuntu ottimizzata con accesso SSH completo, strumenti di sistema avanzati e ambiente di sviluppo professionale per l'apprendimento della programmazione.</p>
                 </div>
-            </div>
 
-            <div class="feature-card">
-                <h3>👥 Gestione Utenti Avanzata</h3>
-                <p>Sistema di account multipli con home directory isolate e permessi di sicurezza. Creazione automatica da file CSV.</p>
+                <div class="feature-card">
+                    <h3><span class="icon">🌐</span> Server Web Integrato</h3>
+                    <p>Apache con supporto PHP completo per lo sviluppo web moderno. Ogni studente ha la propria directory web accessibile tramite URL personalizzato e sicuro.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span class="icon">🗄️</span> Database MySQL/MariaDB</h3>
+                    <p>Database completo con <a href="https://w4s.filippobilardo.it/adminer.php" target="_blank">Adminer</a> per gestione web-based. Ogni studente ha il proprio database personale con credenziali dedicate e isolamento completo.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span class="icon">👥</span> Gestione Utenti Avanzata</h3>
+                    <p>Sistema di account multipli con home directory isolate, permessi di sicurezza granulari e creazione automatica da file CSV per una gestione efficiente degli studenti.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span class="icon">🔄</span> Controllo Versione Git</h3>
+                    <p>Git completamente integrato per il controllo versione, collaborazione e gestione progetti. Ogni studente può creare repository privati, collaborare su progetti condivisi e imparare le best practices del version control.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3><span class="icon">🛡️</span> Sicurezza e Monitoraggio</h3>
+                    <p>Sistema di sicurezza avanzato con isolamento completo degli utenti, monitoraggio delle risorse in tempo reale, backup automatici e logging dettagliato per garantire un ambiente sicuro e affidabile.</p>
+                </div>
             </div>
         </section>
 
-        <section>
-            <h2>💻 Linguaggi e Tecnologie Supportati</h2>
+        <section id="languages" class="section">
+            <div class="section-header">
+                <h2>💻 Tecnologie Supportate</h2>
+                <p>Un ambiente completo per imparare e sviluppare con i linguaggi più richiesti</p>
+            </div>
+
             <div class="languages">
                 <span class="lang-tag">C/C++</span>
                 <span class="lang-tag">Python 3</span>
@@ -187,87 +876,287 @@
                 <span class="lang-tag">Apache</span>
             </div>
 
-            <h3>🛠️ Strumenti di Sviluppo</h3>
-            <ul>
-                <li><strong>Compilatori</strong>: GCC, G++, Make, GDB, CMake</li>
-                <li><strong>Interpreti</strong>: Python 3, Node.js, PHP</li>
-                <li><strong>Java</strong>: OpenJDK 17, Maven, Gradle, Ant, Groovy</li>
-                <li><strong>Editor</strong>: Vim, Nano</li>
-                <li><strong>Utilità</strong>: Git, SSH, Curl, Wget, Htop, Tmux</li>
-                <li><strong>Educativo</strong>: Gnuplot, Octave</li>
-            </ul>
-        </section>
+            <div class="tools-grid">
+                <div class="tool-category">
+                    <h4>🔧 Strumenti di Sviluppo</h4>
+                    <ul>
+                        <li>Compilatori: GCC, G++, Make, GDB</li>
+                        <li>Interpreti: Python 3, Node.js, PHP</li>
+                        <li>Java: OpenJDK 17, Maven, Gradle</li>
+                        <li>Editor: Vim, Nano, Git</li>
+                        <li>Utilità: SSH, Curl, Wget, Htop</li>
+                    </ul>
+                </div>
 
-        <div class="access-info">
-            <h3>🔐 Informazioni di Accesso</h3>
-            <p><strong>Pagina Web:</strong></p>
-            <div class="code">🌐 https://w4s.filippobilardo.it/</div>
-            
-            <p><strong>Accesso SSH:</strong></p>
-            <div class="code">🔑 ssh username@163.192.115.36 -p 2222</div>
-            <small>Password provvisoria: stud123</small>
-            
-            <p><strong>Database MySQL:</strong></p>
-            <div class="code">🗄️ mysql -h 163.192.115.36 -P 3307 -u username -p</div>
-            <small>Password database: stud123</small>
-            
-            <p><strong>Gestione Database (Adminer):</strong></p>
-            <div class="code">🌐 https://w4s.filippobilardo.it/adminer.php</div>
-            <div class="code">🏠 https://w4s.filippobilardo.it/~username/adminer.php</div>
-            <small>Server: localhost | Username: username | Database: db_username</small>
-            
-            <p><strong>Directory Studenti:</strong></p>
-            <div class="code">🌐 https://w4s.filippobilardo.it/~username</div>
-        </div>
+                <div class="tool-category">
+                    <h4>📊 Strumenti Educativi</h4>
+                    <ul>
+                        <li>Gnuplot per grafici</li>
+                        <li>Octave per calcolo numerico</li>
+                        <li>Documentazione integrata</li>
+                        <li>Esempi di codice</li>
+                        <li>Esercizi guidati</li>
+                    </ul>
+                </div>
 
-        <section>
-            <h2>📚 Per gli Studenti</h2>
-            <div class="feature-card">
-                <h3>🏠 La tua Area Personale</h3>
-                <p>Ogni studente ha:</p>
-                <ul>
-                    <li><strong>Home Directory</strong>: <code>/home/classe/cognome.nome</code></li>
-                    <li><strong>Directory Web</strong>: <code>~/www/</code></li>
-                    <li><strong>Sito Personale</strong>: <code>https://w4s.filippobilardo.it/~username</code></li>
-                    <li><strong>Database Personale</strong>: <code>db_username</code></li>
-                    <li><strong>Adminer Personale</strong>: <code>~/adminer.php</code> (gestione database)</li>
-                    <li><strong>Password Iniziale</strong>: <code>stud123</code> (da cambiare!)</li>
-                </ul>
+                <div class="tool-category">
+                    <h4>🔒 Sicurezza e Monitoraggio</h4>
+                    <ul>
+                        <li>Isolamento utenti completo</li>
+                        <li>Permessi granulari</li>
+                        <li>Monitoraggio risorse</li>
+                        <li>Backup automatici</li>
+                        <li>Log di sistema</li>
+                    </ul>
+                </div>
             </div>
         </section>
 
-        <section>
-            <h2>🚀 Primo Accesso</h2>
-            <ol>
-                <li><strong>Connettiti via SSH</strong>: <code>ssh username@163.192.115.36 -p 2222</code></li>
-                <li><strong>Cambia la password</strong>: <code>passwd</code></li>
-                <li><strong>Esplora il sistema</strong>: <code>ls -la</code></li>
-                <li><strong>Directory web</strong>: <code>cd ~/www</code></li>
-                <li><strong>Modifica il sito</strong>: <code>nano index.html</code></li>
-                <li><strong>Gestisci database</strong>: Accedi ad Adminer tramite <code>~/adminer.php</code></li>
-            </ol>
+        <section id="access" class="section access-section">
+            <h3>🔐 Informazioni di Accesso</h3>
+            <div class="access-grid">
+                <div class="access-item">
+                    <h4>🌐 Pagina Web</h4>
+                    <div class="code">https://w4s.filippobilardo.it/</div>
+                    <p>Homepage principale del sistema</p>
+                </div>
+
+                <div class="access-item">
+                    <h4>🔑 Accesso SSH</h4>
+                    <div class="code">ssh username@163.192.115.36 -p 2222</div>
+                    <small>Password provvisoria: stud123</small>
+                    <p>Accesso diretto al sistema Linux</p>
+                </div>
+
+                <div class="access-item">
+                    <h4>🗄️ Database MySQL</h4>
+                    <div class="code">mysql -h 163.192.115.36 -P 3307 -u username -p</div>
+                    <small>Password database: stud123</small>
+                    <p>Connessione diretta al database</p>
+                </div>
+
+                <div class="access-item">
+                    <h4>🌐 Adminer (Globale)</h4>
+                    <div class="code">https://w4s.filippobilardo.it/adminer.php</div>
+                    <p>Gestione database web-based</p>
+                </div>
+
+                <div class="access-item">
+                    <h4>🏠 Adminer (Personale)</h4>
+                    <div class="code">https://w4s.filippobilardo.it/~username/adminer.php</div>
+                    <p>Adminer dedicato al tuo database</p>
+                </div>
+
+                <div class="access-item">
+                    <h4>🌐 Sito Personale</h4>
+                    <div class="code">https://w4s.filippobilardo.it/~username</div>
+                    <p>Il tuo sito web personale</p>
+                </div>
+            </div>
         </section>
 
-        <div class="footer">
-            <p>🎓 <strong>Web4Student</strong> - Ambiente di sviluppo educativo</p>
-            <p>Versione 1.0 | Sistema basato su Ubuntu 22.04 | Container Docker</p>
-            <small>Per supporto tecnico, consulta la documentazione o contatta l'amministratore</small>
-        </div>
+        <section id="guide" class="section">
+            <div class="section-header">
+                <h2>📚 Guida per Studenti</h2>
+                <p>Tutto quello che devi sapere per iniziare con Web4Student</p>
+            </div>
+
+            <div class="student-guide">
+                <h3>🏠 La tua Area Personale</h3>
+                <div class="guide-grid">
+                    <div class="guide-item">
+                        <h4>📁 Home Directory</h4>
+                        <p><code>/home/classe/cognome.nome</code><br>La tua directory personale con tutti i tuoi file</p>
+                    </div>
+                    <div class="guide-item">
+                        <h4>🌐 Directory Web</h4>
+                        <p><code>~/www/</code><br>Dove sviluppare il tuo sito web personale</p>
+                    </div>
+                    <div class="guide-item">
+                        <h4>🔗 Sito Personale</h4>
+                        <p><code>https://w4s.filippobilardo.it/~username</code><br>Il tuo sito web accessibile da internet</p>
+                    </div>
+                    <div class="guide-item">
+                        <h4>🗄️ Database Personale</h4>
+                        <p><code>db_username</code><br>Il tuo database MySQL dedicato</p>
+                    </div>
+                    <div class="guide-item">
+                        <h4>🔧 Adminer Personale</h4>
+                        <p><code>~/adminer.php</code><br>Gestione del tuo database via web</p>
+                    </div>
+                    <div class="guide-item">
+                        <h4>🔑 Password Iniziale</h4>
+                        <p><code>stud123</code><br><strong>Da cambiare al primo accesso!</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>🚀 Come Iniziare</h3>
+            <div class="steps">
+                <div class="step">
+                    <strong>Connettiti via SSH</strong><br>
+                    <code>ssh username@163.192.115.36 -p 2222</code>
+                </div>
+                <div class="step">
+                    <strong>Cambia la password</strong><br>
+                    <code>passwd</code> (importante per la sicurezza!)
+                </div>
+                <div class="step">
+                    <strong>Esplora il sistema</strong><br>
+                    <code>ls -la</code> per vedere i tuoi file
+                </div>
+                <div class="step">
+                    <strong>Directory web</strong><br>
+                    <code>cd ~/www</code> per andare nella tua directory web
+                </div>
+                <div class="step">
+                    <strong>Modifica il sito</strong><br>
+                    <code>nano index.html</code> per modificare la tua homepage
+                </div>
+                <div class="step">
+                    <strong>Gestisci database</strong><br>
+                    Accedi ad Adminer tramite <code>https://w4s.filippobilardo.it/~username/adminer.php</code>
+                </div>
+            </div>
+        </section>
     </div>
 
+    <footer class="footer">
+        <div class="footer-content">
+            <h3>🎓 Web4Student</h3>
+            <p>Ambiente di sviluppo educativo basato su Ubuntu 22.04 in container Docker</p>
+            <p>Versione 1.0 | Sistema multi-utente con isolamento completo</p>
+
+            <div class="footer-links">
+                <a href="#features" class="footer-link">Funzionalità</a>
+                <a href="#languages" class="footer-link">Tecnologie</a>
+                <a href="#access" class="footer-link">Accesso</a>
+                <a href="#guide" class="footer-link">Guida</a>
+                <a href="infrastruttura.html" class="footer-link">Infrastruttura</a>
+                <a href="https://github.com/filippo-bilardo/web4student" class="footer-link" target="_blank">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+            </div>
+
+            <div class="copyright">
+                <p>© 2025 Web4Student - Ambiente Educativo Open Source</p>
+                <p>Creato con ❤️ per studenti e docenti | <span id="currentDate"></span></p>
+            </div>
+        </div>
+    </footer>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
     <script>
-        // Aggiunge la data/ora corrente
-        document.addEventListener('DOMContentLoaded', function() {
-            const footer = document.querySelector('.footer');
-            const date = new Date().toLocaleString('it-IT');
-            footer.innerHTML += `<br><small>Ultimo accesso: ${date}</small>`;
+        // Loading screen
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('loading').classList.add('hidden');
+            }, 500);
         });
 
-        // Check status dei servizi (simulato)
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Scroll to top button
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        });
+
+        scrollToTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Status badge animation
         setTimeout(function() {
-            const status = document.querySelector('.status');
-            status.innerHTML = '🟢 SERVIZI ATTIVI';
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.innerHTML = '🟢 SERVIZI ATTIVI';
         }, 1000);
+
+        // Current date in footer
+        const currentDateElement = document.getElementById('currentDate');
+        const now = new Date();
+        currentDateElement.textContent = now.toLocaleDateString('it-IT', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all feature cards and sections
+        document.querySelectorAll('.feature-card, .section').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Language tags hover effect
+        document.querySelectorAll('.lang-tag').forEach(tag => {
+            tag.addEventListener('mouseenter', function() {
+                this.style.animation = 'none';
+            });
+
+            tag.addEventListener('mouseleave', function() {
+                this.style.animation = '';
+            });
+        });
+
+        // Add loading animation to buttons
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Caricamento...';
+                setTimeout(() => {
+                    this.innerHTML = this.textContent;
+                }, 2000);
+            });
+        });
     </script>
 </body>
+</html>
 </html>

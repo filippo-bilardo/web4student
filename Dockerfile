@@ -89,11 +89,6 @@ RUN apt-get update && apt-get install -y \
     tree \
     less \
     ca-certificates \
-    # ===========================================================================
-    # QUOTA DISCO - Strumenti per limitare lo spazio disco utenti
-    # ===========================================================================
-    quota \
-    quotatool \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*  # Rimozione liste pacchetti per ridurre dimensione immagine
 
@@ -192,20 +187,6 @@ RUN service mariadb start && \
 RUN chown -R mysql:mysql /var/lib/mysql
 
 # ===========================================================================
-# CONFIGURAZIONE QUOTE DISCO - Limitazione spazio utenti
-# ===========================================================================
-# Crea i file di database delle quote
-RUN touch /quota.user /quota.group
-RUN chmod 600 /quota.user /quota.group
-
-# Configura il supporto quote nel sistema
-# Nota: Le quote funzionano pienamente solo se il filesystem supporta le quote
-# In ambiente Docker, le quote sono simulate per scopi educativi
-RUN echo "# Quota configuration" >> /etc/fstab
-RUN quotacheck -cum / 2>/dev/null || true
-RUN quotaon / 2>/dev/null || true
-
-# ===========================================================================
 # CREAZIONE DIRECTORY E VOLUMI - Setup per persistenza dati
 # ===========================================================================
 # Crea directory per file condivisi tra studenti
@@ -236,6 +217,12 @@ COPY volumes/config/index.html /var/www/html/index.html
 # ===========================================================================
 # Copia Adminer nella directory web principale di Apache
 COPY volumes/config/adminer.php /var/www/html/adminer.php
+
+# ===========================================================================
+# INFRASTRUTTURA - Documentazione tecnica del sistema
+# ===========================================================================
+# Copia la documentazione dell'infrastruttura nella directory web
+COPY volumes/config/infrastruttura.html /var/www/html/infrastruttura.html
 
 # ===========================================================================
 # ESPOSIZIONE PORTE - Servizi accessibili dall'esterno

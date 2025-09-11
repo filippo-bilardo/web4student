@@ -50,9 +50,18 @@ tail -n +2 "$CSV_FILE" | while IFS=',' read -r classe cognome nome username; do
     # Directory home dell'utente
     USER_HOME="$CLASS_DIR/$cognome.$nome"
     
+    # Crea database personale per l'utente (anche se utente esiste già)
+    mysql -u root -e "CREATE DATABASE IF NOT EXISTS \`db_$username\`;"
+    mysql -u root -e "CREATE USER IF NOT EXISTS '$username'@'%' IDENTIFIED BY '${username}123';"
+    mysql -u root -e "CREATE USER IF NOT EXISTS '$username'@'localhost' IDENTIFIED BY '${username}123';"
+    mysql -u root -e "GRANT ALL PRIVILEGES ON \`db_$username\`.* TO '$username'@'%';"
+    mysql -u root -e "GRANT ALL PRIVILEGES ON \`db_$username\`.* TO '$username'@'localhost';"
+    mysql -u root -e "FLUSH PRIVILEGES;"
+    echo "🗄️ Database creato/verificato: db_$username"
+    
     # Verifica se l'utente esiste già
     if id "$username" >/dev/null 2>&1; then
-        echo "⚠️  Utente $username esiste già, salto..."
+        echo "⚠️  Utente $username esiste già, database creato/verificato - salto creazione utente..."
         continue
     fi
     
@@ -61,17 +70,6 @@ tail -n +2 "$CSV_FILE" | while IFS=',' read -r classe cognome nome username; do
     
     # Imposta la password di default
     echo "$username:student123" | chpasswd
-    
-    # Imposta quota disco a 10MB (10240 KB)
-    # Soft limit: 8MB, Hard limit: 10MB
-    setquota -u "$username" 8192 10240 0 0 /
-    
-    # Verifica che la quota sia stata impostata
-    if quota -u "$username" >/dev/null 2>&1; then
-        echo "  💾 Quota disco impostata: 10MB massimi"
-    else
-        echo "  ⚠️ Impossibile impostare quota disco"
-    fi
     
     # Crea la directory www per lo sviluppo web
     WWW_DIR="$USER_HOME/www"
@@ -291,10 +289,6 @@ Database MySQL/MariaDB:
 - Web Tool Personale: http://w4s.filippobilardo.it/~$username/adminer.php
 - Web Tool Globale: http://w4s.filippobilardo.it/adminer.php
 
-Limitazioni Sistema:
-- Spazio disco: 10MB massimi (8MB soft limit)
-- Per verificare utilizzo: quota -u $username
-
 Per aiuto: man <comando> oppure <comando> --help
 
 Buon lavoro!
@@ -335,12 +329,6 @@ EOF
     # 📁 SUPPORTO FILE MULTIMEDIALI: Assicura che immagini e altri file siano accessibili
     # Apache può servire: .jpg, .png, .gif, .css, .js, .txt, .pdf, etc.
     echo "  📸 Tutti i file web sono accessibili da Apache (immagini, CSS, JS, etc.)"
-    
-    # Crea database personale per l'utente
-    mysql -u root -e "CREATE DATABASE IF NOT EXISTS db_$username;"
-    mysql -u root -e "CREATE USER IF NOT EXISTS '$username'@'%' IDENTIFIED BY '${username}123';"
-    mysql -u root -e "GRANT ALL PRIVILEGES ON db_$username.* TO '$username'@'%';"
-    mysql -u root -e "FLUSH PRIVILEGES;"
     
     echo "✅ Creato utente: $username ($nome $cognome) - Classe $classe"
     echo "   🏠 Home: $USER_HOME"

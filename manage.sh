@@ -22,8 +22,6 @@ show_usage() {
     echo "  mysql-fix         - Corregge problemi MySQL"
     echo "  mysql-root        - Accede a MySQL come root"
     echo "  mysql-admin       - Accede a MySQL come admin"
-    echo "  check-quotas      - Verifica quote disco utilizzate"
-    echo "  reset-quota       - Reimposta quota per un utente specifico"
     echo "  clean             - Rimuove container e immagini"
     echo "  backup            - Crea backup delle home directory"
     echo "  restore           - Ripristina backup delle home directory"
@@ -32,12 +30,7 @@ show_usage() {
     echo "  $0 start"
     echo "  $0 create-users"
     echo "  $0 configure-aliases"
-    echo "  $0 fix-permissions"
-    echo "  $0 fix-prof-home"
-    echo "  $0 apply-quotas"
-    echo "  $0 check-quotas"
     echo "  $0 install-adminer"
-    echo "  $0 reset-quota mario.rossi"
     echo "  $0 shell"
 }
 
@@ -172,23 +165,6 @@ case "$1" in
         echo "✅ Backup ripristinato!"
         ;;
         
-    check-quotas)
-        echo "🔍 Verifica quote disco..."
-        docker exec web4student repquota / 2>/dev/null || echo "⚠️ Sistema quote non attivo"
-        ;;
-    
-    reset-quota)
-        if [ -z "$2" ]; then
-            echo "❌ Specifica l'username per cui reimpostare la quota"
-            echo "Utilizzo: $0 reset-quota <username>"
-            exit 1
-        fi
-        echo "🔄 Reimpostazione quota per utente: $2"
-        docker exec web4student setquota -u "$2" 8192 10240 0 0 /
-        docker exec web4student quota -u "$2" 2>/dev/null || echo "⚠️ Impossibile verificare quota"
-        ;;
-
-    
     *)
         show_usage
         exit 1

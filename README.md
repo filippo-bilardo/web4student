@@ -52,7 +52,27 @@ Perfetto per **scuole, università e corsi di programmazione**!
 
 ---
 
-## 🚀 Quick Start (5 minuti)
+## � Screenshots
+
+### 🏠 Homepage Principale
+![Homepage Web4Student](docs/image1.png)
+*Interfaccia web principale con navigazione e strumenti disponibili*
+
+### 👨‍🎓 Area Studente
+![Area Studente](docs/image2.png)
+*Spazio personale dello studente con progetti e risorse*
+
+### 🗄️ Gestione Database
+![Adminer Database](docs/image3.png)
+*Interfaccia Adminer per la gestione dei database MySQL*
+
+### ⚙️ Pannello di Controllo
+![Pannello Controllo](docs/image4.png)
+*Dashboard amministrativa per monitoraggio e gestione*
+
+---
+
+## �🚀 Quick Start (5 minuti)
 
 ### 1. Clona e Posizionati
 ```bash

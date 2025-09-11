@@ -94,8 +94,9 @@ Questa checklist ti guida attraverso **4 fasi principali**:
   # Dovrebbe mostrare: web4student (running)
   ```
 
-### ✅ 2.2 Creazione Account Studenti (Opzionale)
+### ✅ 2.2 Creazione Account Studenti aggiuntivi (Opzionale)
 - [ ] **Esegui script creazione utenti**
+  modifica il file students.csv in `volumes/`
   ```bash
   ./manage.sh create-users
   # Oppure: ./scripts/create_student_accounts.sh volumes/students.csv
@@ -112,10 +113,6 @@ Questa checklist ti guida attraverso **4 fasi principali**:
   ssh prof@localhost -p 2222
   passwd  # Cambia da prof123
   exit
-  ```
-- [ ] **Verifica permessi sicurezza**
-  ```bash
-  ./scripts/test_security.sh
   ```
 
 ---
@@ -151,6 +148,7 @@ Questa checklist ti guida attraverso **4 fasi principali**:
   ssh mrossi@localhost -p 2222
   # Password: student123
   pwd  # Dovrebbe mostrare: /home/3A/mrossi.rossi
+  passwd  # Cambia da student123
   exit
   ```
 
@@ -186,18 +184,6 @@ Questa checklist ti guida attraverso **4 fasi principali**:
 - [ ] **Accesso shell e comandi**
   ```bash
   ssh prof@localhost -p 2222
-  gcc --version     # Compilatore C
-  python3 --version # Python
-  java -version     # Java
-  node --version    # Node.js
-  php --version     # PHP
-  git --version     # Git
-  exit
-  ```
-- [ ] **Test quota disco**
-  ```bash
-  ssh mrossi@localhost -p 2222
-  quota -u mrossi  # Dovrebbe mostrare limiti 10MB
   exit
   ```
 
