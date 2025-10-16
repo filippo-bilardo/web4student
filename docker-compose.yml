@@ -48,8 +48,12 @@ services:
       # Connessione diretta: ssh username@localhost -p 2222
       - "2222:22"
       - "8080:80"   # se si decide di aprire direttamente la porta 8080 dell'host
-      - "3030:3000" # se si decide di aprire direttamente la porta 3030 dell'host
+      - "3001:3000" # se si decide di aprire direttamente la porta 3000 dell'host
       - "3307:3306" # se si decide di aprire direttamente la porta 3307 dell'host
+      - "2223:2223" # esercizi con le socket
+      - "2224:2224" # esercizi con le socket
+      - "2225:5555" # esercizi con le socket
+      - "2226-2999:2226-2999" # range porte VM esposte al container
 
     expose:
       - "80"     # HTTP per nginx-proxy-manager
