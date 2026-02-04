@@ -57,9 +57,10 @@ RUN apt-get update && apt-get install -y \
     groovy \
     # ===========================================================================
     # NODE.JS E JAVASCRIPT - Sviluppo web e applicazioni server-side
+    # Installazione di Node.js LTS tramite NodeSource repository
     # ===========================================================================
-    nodejs \
-    npm \
+    ca-certificates \
+    gnupg \
     # ===========================================================================
     # WEB SERVER E PHP - Stack per sviluppo web dinamico
     # ===========================================================================
@@ -91,6 +92,15 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*  # Rimozione liste pacchetti per ridurre dimensione immagine
+
+# ===========================================================================
+# INSTALLAZIONE NODE.JS LTS - Versione 24.x (LTS)
+# ===========================================================================
+# Usa NodeSource repository per avere l'ultima versione LTS di Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # ===========================================================================
 # CONFIGURAZIONE NODE.JS - Pacchetti globali per sviluppo JavaScript
@@ -231,7 +241,7 @@ COPY volumes/config/infrastruttura.html /var/www/html/infrastruttura.html
 # - 22: SSH (mappata su 2222 dell'host)
 # - 80: HTTP Apache (mappata su 8080 dell'host)  
 # - 443: HTTPS Apache (mappata su 8443 dell'host)
-# - 3000: Node.js applications (mappata su 3000 dell'host)
+# - 3000: Node.js applications (mappata su 3001 dell'host)
 # - 3306: MySQL/MariaDB (mappata su 3307 dell'host)
 EXPOSE 22 80 443 3000 3306
 
