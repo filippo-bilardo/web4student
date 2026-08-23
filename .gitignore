@@ -48,3 +48,6 @@ Thumbs.db
 
 # Log di Docker
 docker-compose.override.yml
+
+# GitHub directory (contiene configurazioni e workflow)
+.github/
