@@ -2,6 +2,9 @@
 volumes/home/
 volumes/mysql_data/
 
+# prompt
+PROMPT.md
+
 # File di dati studenti - DATI SENSIBILI
 volumes/students.csv
 volumes/students*.csv

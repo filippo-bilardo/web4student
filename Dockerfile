@@ -123,19 +123,22 @@ RUN mkdir /var/run/sshd
 RUN sed -i 's/Port 22/Port 22/' /etc/ssh/sshd_config
 
 # ===========================================================================
-# CREAZIONE UTENTE AMMINISTRATORE - Account 'prof' per gestione sistema
+# CREAZIONE UTENTI AMMINISTRATORI - Account persistenti per gestione sistema
 # ===========================================================================
-# Crea l'utente prof con privilegi sudo per amministrazione del sistema
-RUN useradd -m -s /bin/bash -G sudo prof
+RUN useradd -m -s /bin/bash -G sudo prof \
+    && echo 'prof:prof123' | chpasswd \
+    && useradd -m -s /bin/bash -G sudo fb \
+    && echo 'fb:fb123' | chpasswd \
+    && mkdir -p /home/prof/www /home/fb/www \
+    && chown -R prof:prof /home/prof \
+    && chown -R fb:fb /home/fb \
+    && chmod 755 /home/prof /home/prof/www /home/fb /home/fb/www
 
-# Imposta password iniziale per l'utente prof (da cambiare al primo accesso)
-RUN echo 'prof:prof123' | chpasswd
-
-# Assicura che la home directory esista con i permessi corretti
-RUN mkdir -p /home/prof && chown prof:prof /home/prof && chmod 755 /home/prof
-
-# Crea directory www per il professore
-RUN mkdir -p /home/prof/www && chown prof:prof /home/prof/www && chmod 755 /home/prof/www
+RUN printf '%s\n' \
+    'prof ALL=(ALL) ALL' \
+    'fb ALL=(ALL) ALL' \
+    > /etc/sudoers.d/web4student-admins \
+    && chmod 440 /etc/sudoers.d/web4student-admins
 
 # ===========================================================================
 # CONFIGURAZIONE APACHE - Abilitazione moduli per funzionalità web avanzate
@@ -160,12 +163,18 @@ RUN a2enmod php8.1
 
 # Crea la configurazione corretta per userdir sostituendo il file predefinito
 RUN echo '<IfModule mod_userdir.c>' > /etc/apache2/mods-available/userdir.conf && \
-    echo '    UserDir www' >> /etc/apache2/mods-available/userdir.conf && \
-    echo '    UserDir disabled root' >> /etc/apache2/mods-available/userdir.conf && \
-    echo '' >> /etc/apache2/mods-available/userdir.conf && \
-    echo '    <Directory /home/*/*/www>' >> /etc/apache2/mods-available/userdir.conf && \
-    echo '        AllowOverride All' >> /etc/apache2/mods-available/userdir.conf && \
-    echo '        Options Indexes FollowSymLinks MultiViews' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '    UserDir www' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '    UserDir disabled root' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '    <Directory /home/*/www>' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '        AllowOverride All' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '        Options Indexes FollowSymLinks MultiViews' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '        Require all granted' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '    </Directory>' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '    <Directory /home/*/*/www>' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '        AllowOverride All' >> /etc/apache2/mods-available/userdir.conf && \
+     echo '        Options Indexes FollowSymLinks MultiViews' >> /etc/apache2/mods-available/userdir.conf && \
     echo '        Require all granted' >> /etc/apache2/mods-available/userdir.conf && \
     echo '    </Directory>' >> /etc/apache2/mods-available/userdir.conf && \
     echo '</IfModule>' >> /etc/apache2/mods-available/userdir.conf
@@ -203,7 +212,7 @@ RUN chown -R mysql:mysql /var/lib/mysql
 RUN mkdir -p /home/shared
 
 # Crea directory principale per il web server
-RUN mkdir -p /var/www/html
+RUN mkdir -p /var/www/html /usr/local/share/web4student/webroot
 
 # ===========================================================================
 # COPIA SCRIPT E CONFIGURAZIONI - File necessari per il funzionamento
@@ -221,18 +230,21 @@ RUN chmod +x /usr/local/bin/*.sh
 # Copia la homepage personalizzata dal file di configurazione
 # invece di generarla con comandi echo
 COPY volumes/config/index.html /var/www/html/index.html
+COPY volumes/config/index.html /usr/local/share/web4student/webroot/index.html
 
 # ===========================================================================
 # ADMINER - Tool di gestione database web-based
 # ===========================================================================
 # Copia Adminer nella directory web principale di Apache
 COPY volumes/config/adminer.php /var/www/html/adminer.php
+COPY volumes/config/adminer.php /usr/local/share/web4student/webroot/adminer.php
 
 # ===========================================================================
 # INFRASTRUTTURA - Documentazione tecnica del sistema
 # ===========================================================================
 # Copia la documentazione dell'infrastruttura nella directory web
 COPY volumes/config/infrastruttura.html /var/www/html/infrastruttura.html
+COPY volumes/config/infrastruttura.html /usr/local/share/web4student/webroot/infrastruttura.html
 
 # ===========================================================================
 # ESPOSIZIONE PORTE - Servizi accessibili dall'esterno

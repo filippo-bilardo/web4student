@@ -3,6 +3,151 @@
 # Script di inizializzazione per Web4Student
 echo "🚀 Avvio Web4Student..."
 
+ensure_runtime_dirs() {
+    mkdir -p /run/sshd /run/apache2 /run/mysqld
+    chown root:root /run/sshd /run/apache2
+    chown mysql:mysql /run/mysqld
+}
+
+start_required_service() {
+    local service_name="$1"
+    local startup_message="$2"
+
+    echo "$startup_message"
+    service "$service_name" start
+    sleep 1
+
+    if ! service "$service_name" status >/dev/null 2>&1; then
+        echo "❌ Avvio del servizio $service_name fallito"
+        exit 1
+    fi
+}
+
+ensure_admin_sudoers() {
+    cat > /etc/sudoers.d/web4student-admins << 'EOF'
+prof ALL=(ALL) ALL
+fb ALL=(ALL) ALL
+EOF
+    chmod 440 /etc/sudoers.d/web4student-admins
+}
+
+ensure_admin_account() {
+    local username="$1"
+    local password="$2"
+    local home_dir="/home/$username"
+
+    if ! id "$username" >/dev/null 2>&1; then
+        echo "👤 Ricreazione utente amministratore $username..."
+        useradd -M -d "$home_dir" -s /bin/bash -G sudo "$username"
+        echo "$username:$password" | chpasswd
+    else
+        usermod -d "$home_dir" -s /bin/bash "$username"
+        usermod -a -G sudo "$username"
+    fi
+
+    mkdir -p "$home_dir" "$home_dir/www"
+    chown -R "$username:$username" "$home_dir"
+    chmod 755 "$home_dir" "$home_dir/www"
+}
+
+ensure_admin_homepage() {
+    local username="$1"
+    local title="$2"
+    local home_dir="/home/$username"
+    local www_dir="$home_dir/www"
+
+    if [ ! -f "$www_dir/index.html" ]; then
+        cat > "$www_dir/index.html" << EOF
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>$title - Web4Student</title>
+</head>
+<body>
+    <h1>$title</h1>
+    <p>Benvenuto nell'area riservata di $username.</p>
+    <hr>
+    <h2>Strumenti amministrativi</h2>
+    <ul>
+        <li><a href="/adminer.php" target="_blank">Adminer</a></li>
+        <li><a href="info.php" target="_blank">Informazioni PHP</a></li>
+    </ul>
+    <hr>
+    <p>Area web: $www_dir</p>
+</body>
+</html>
+EOF
+    fi
+
+    if [ ! -f "$www_dir/info.php" ]; then
+        cat > "$www_dir/info.php" << EOF
+<?php
+echo "<h2>Informazioni Sistema</h2>";
+echo "<p>Utente: $username</p>";
+echo "<p>Data: " . date('Y-m-d H:i:s') . "</p>";
+echo "<hr>";
+phpinfo();
+?>
+EOF
+    fi
+
+    chown "$username:$username" "$www_dir/index.html" "$www_dir/info.php"
+    chmod 644 "$www_dir/index.html" "$www_dir/info.php"
+}
+
+ensure_apache_homepage() {
+    local template_root="/usr/local/share/web4student/webroot"
+    local web_root="/var/www/html"
+    local asset
+
+    mkdir -p "$web_root"
+
+    for asset in index.html adminer.php infrastruttura.html; do
+        if [ ! -s "$web_root/$asset" ] && [ -f "$template_root/$asset" ]; then
+            install -o root -g root -m 644 "$template_root/$asset" "$web_root/$asset"
+        fi
+    done
+}
+
+cleanup() {
+    echo "🛑 Arresto Web4Student..."
+    /usr/local/bin/manage_auth_state.sh export 2>/dev/null || true
+
+    if [ -n "${auth_sync_pid:-}" ]; then
+        kill "$auth_sync_pid" 2>/dev/null || true
+        wait "$auth_sync_pid" 2>/dev/null || true
+    fi
+
+    if [ -n "${log_tail_pid:-}" ]; then
+        kill "$log_tail_pid" 2>/dev/null || true
+        wait "$log_tail_pid" 2>/dev/null || true
+    fi
+
+    exit 0
+}
+
+trap cleanup TERM INT
+
+# Verifica la directory condivisa persistente per lo stato account
+echo "📁 Verifica directory condivisa persistente..."
+mkdir -p /home/shared
+chown root:root /home/shared
+chmod 755 /home/shared
+
+# Ripristina lo stato persistente degli account Linux (passwd/shadow/group/gshadow)
+echo "🔐 Ripristino stato account persistente..."
+/usr/local/bin/manage_auth_state.sh restore
+
+echo "🛡️ Allineamento utenti amministratori..."
+ensure_admin_sudoers
+ensure_admin_account prof prof123
+ensure_admin_account fb fb123
+ensure_admin_homepage prof "Area Professore"
+ensure_admin_homepage fb "Area Amministratore FB"
+ensure_apache_homepage
+
 # Verifica e corregge la home directory dell'utente prof
 echo "👨‍🏫 Verifica home directory utente prof..."
 if [ ! -d "/home/prof" ]; then
@@ -10,52 +155,6 @@ if [ ! -d "/home/prof" ]; then
     mkdir -p /home/prof
     chown prof:prof /home/prof
     chmod 755 /home/prof
-fi
-
-# Crea directory www per prof se non esistente
-if [ ! -d "/home/prof/www" ]; then
-    echo "🌐 Creazione directory www per prof..."
-    mkdir -p /home/prof/www
-    chown prof:prof /home/prof/www
-    chmod 755 /home/prof/www
-    
-    # Crea una homepage per il professore
-    cat > /home/prof/www/index.html << 'EOF'
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Area Professore - Web4Student</title>
-</head>
-<body>
-    <h1>👨‍🏫 Area Professore</h1>
-    <p>Benvenuto nell'area riservata al professore.</p>
-    <hr>
-    <h2>🛠️ Strumenti Amministrativi</h2>
-    <ul>
-        <li><a href="/adminer.php" target="_blank">🗄️ Adminer - Gestione Database</a></li>
-        <li><a href="info.php" target="_blank">ℹ️ Informazioni PHP</a></li>
-    </ul>
-    <hr>
-    <p>Area web: /home/prof/www/</p>
-</body>
-</html>
-EOF
-    
-    # Crea info.php per il professore
-    cat > /home/prof/www/info.php << 'EOF'
-<?php
-echo "<h2>Informazioni Sistema</h2>";
-echo "<p>Utente: prof (Professore)</p>";
-echo "<p>Data: " . date('Y-m-d H:i:s') . "</p>";
-echo "<hr>";
-phpinfo();
-?>
-EOF
-    
-    chown prof:prof /home/prof/www/*
-    chmod 644 /home/prof/www/*
 fi
 
 # Verifica e corregge i permessi di MySQL se necessario
@@ -68,9 +167,11 @@ fi
 # Assicura che i permessi siano corretti
 chown -R mysql:mysql /var/lib/mysql
 
+echo "🗂️ Preparazione directory runtime dei servizi..."
+ensure_runtime_dirs
+
 # Avvia MySQL/MariaDB
-echo "📂 Avvio del database MySQL/MariaDB..."
-service mariadb start
+start_required_service mariadb "📂 Avvio del database MySQL/MariaDB..."
 
 # Attende che MySQL sia completamente avviato
 echo "⏳ Attesa avvio MySQL..."
@@ -88,17 +189,30 @@ if [ $? -ne 0 ]; then
 fi
 
 # Avvia SSH
-echo "�🔑 Avvio del servizio SSH..."
-service ssh start
+start_required_service ssh "🔑 Avvio del servizio SSH..."
 
 # Avvia Apache
-echo "🌐 Avvio del server web Apache..."
-service apache2 start
+start_required_service apache2 "🌐 Avvio del server web Apache..."
 
 # Verifica se esistono utenti da creare
 if [ -f /home/students.csv ]; then
     echo "👥 Trovato file students.csv, creazione account studenti..."
     /usr/local/bin/create_student_accounts.sh /home/students.csv
+fi
+
+echo "♻️  Verifica e ripristino account da home persistenti..."
+/usr/local/bin/restore_persisted_accounts.sh
+
+echo "💾 Salvataggio stato account persistente..."
+/usr/local/bin/manage_auth_state.sh export
+
+echo "🔄 Avvio sincronizzazione stato account..."
+/usr/local/bin/manage_auth_state.sh daemon &
+auth_sync_pid=$!
+
+if ! service ssh status >/dev/null 2>&1 || ! service apache2 status >/dev/null 2>&1 || ! service mariadb status >/dev/null 2>&1; then
+    echo "❌ Uno o più servizi essenziali non risultano attivi dopo il bootstrap"
+    exit 1
 fi
 
 echo "✅ Web4Student è pronto!"
@@ -109,4 +223,6 @@ echo "  - Root: mysql -u root (senza password)"
 echo "  - Admin: mysql -u admin -p (password: admin123)"
 
 # Mantiene il container in esecuzione
-tail -f /var/log/apache2/access.log /var/log/apache2/error.log
+tail -f /var/log/apache2/access.log /var/log/apache2/error.log &
+log_tail_pid=$!
+wait "$log_tail_pid"

@@ -104,6 +104,13 @@ open http://localhost:8080
 # Crea utenti da CSV
 ./manage.sh create-users
 
+# Se il container è stato ricreato, ripristina anche gli account
+# presenti nei volumi ma assenti nell'attuale students.csv
+./manage.sh restore-users
+
+# Riepilogo spazio occupato dalle home degli studenti
+./manage.sh student-usage
+
 # Verifica stato
 ./manage.sh status
 ```
@@ -174,6 +181,8 @@ ssh username@localhost -p 2222
 passwd
 ```
 
+La password cambiata viene salvata in modo persistente e resta valida anche dopo riavvio o ricreazione del container.
+
 ### Il Tuo Ambiente Personale
 ```
 🏠 ~/                     # Home directory
@@ -216,6 +225,12 @@ EOF
 # 2. Crea account
 ./manage.sh create-users
 
+# 2b. Ripristina gli account presenti nei volumi persistenti
+./manage.sh restore-users
+
+# Le password cambiate dagli utenti restano persistenti
+# anche dopo restart o recreate del container
+
 # 3. Verifica
 ./manage.sh status
 ```
@@ -228,6 +243,8 @@ EOF
 ./manage.sh restart      # Riavvia
 ./manage.sh logs         # Visualizza log
 ./manage.sh shell        # Accesso shell
+./manage.sh restore-users # Ricrea account dalle home persistenti
+./manage.sh student-usage # Riepilogo spazio home studenti
 ./manage.sh backup       # Backup dati
 ./manage.sh clean        # Reset completo
 ```
@@ -362,4 +379,3 @@ Questo progetto è distribuito sotto licenza **MIT**. Vedi il file [LICENSE](LIC
 ---
 
 **🎓 Web4Student - Trasforma il modo di insegnare programmazione!**
-

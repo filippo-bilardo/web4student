@@ -207,6 +207,7 @@ Questa checklist ti guida attraverso **4 fasi principali**:
   ```bash
   docker exec web4student df -h     # Spazio disco
   docker exec web4student free -h   # RAM
+  ./manage.sh student-usage         # Home studenti piu' pesanti
   ```
 
 ### ✅ 4.2 Backup Dati
