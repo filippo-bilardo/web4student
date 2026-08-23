@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     # ===========================================================================
     # SISTEMA BASE - Strumenti essenziali per il funzionamento del container
     # ===========================================================================
+    quota \
     openssh-server \
     sudo \
     curl \

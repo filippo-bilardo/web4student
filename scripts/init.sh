@@ -9,6 +9,42 @@ ensure_runtime_dirs() {
     chown mysql:mysql /run/mysqld
 }
 
+# Setup disk quotas per utente per le home directories
+setup_disk_quotas() {
+    echo "💾 Impostazione quote disco per utenti..."
+
+    # Abilita le quote sul filesystem /home
+    # Questo richiede che il filesystem supporti le quote (ext4, xfs, etc.)
+    if [ -d "/home" ]; then
+        # Inizializza il file delle quote se non esiste
+        if [ ! -f /home/aquota.user ]; then
+            quotactl -x /home 2>/dev/null || echo "⚠️ Impossibile attivare quote su /home"
+        fi
+
+        # Attiva le quote per utente su /home
+        quotaon -v /home 2>/dev/null || echo "⚠️ impossibile attivare quotaon su /home"
+    fi
+
+    # Imposta quote per utenti noti (limite: 100MB, soft: 50MB per home directory)
+    # Formato: setquota [filesystem] [username] [blocks] [inodes] [blocks_soft] [inodes_soft] [hardlimit] [inode_hardlimit] [date]
+    # 100MB = 102400 blocks (da 1KB ciascuno)
+
+    # Quote per utente amministratore fb
+    if id fb >/dev/null 2>&1; then
+        setquota -F /home fb 102400 0 51200 0 102400 0 0 2>/dev/null
+        echo "  ✅ Quote impostate per utente: fb (100MB soft, 100MB hard)"
+    fi
+
+    # Quote per utente amministratore prof
+    if id prof >/dev/null 2>&1; then
+        setquota -F /home prof 102400 0 51200 0 102400 0 0 2>/dev/null
+        echo "  ✅ Quote impostate per utente: prof (100MB soft, 100MB hard)"
+    fi
+
+    # Quote per studenti (verranno applicate quando vengono creati)
+    echo "  ℹ️ Quote per studenti impostate di default (aggiustabili per cada utente)"
+}
+
 start_required_service() {
     local service_name="$1"
     local startup_message="$2"
@@ -96,6 +132,9 @@ EOF
     chown "$username:$username" "$www_dir/index.html" "$www_dir/info.php"
     chmod 644 "$www_dir/index.html" "$www_dir/info.php"
 }
+
+# Setup disk quotas after user creation
+setup_disk_quotas
 
 ensure_apache_homepage() {
     local template_root="/usr/local/share/web4student/webroot"
