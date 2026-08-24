@@ -1,0 +1,31 @@
+# Metadati Git e configurazioni locali
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Dati persistenti e riservati
+volumes/home/
+volumes/mysql_data/
+volumes/students.csv
+volumes/students*.csv
+*students*.csv
+volumes/logs/
+
+# Backup e artefatti temporanei
+backup_*.tar.gz
+*.tar.gz
+*.log
+*.tmp
+*.swp
+*.bak
+.cache/
+tmp/
+temp/
+
+# File di sistema e configurazioni non necessarie alla build
+.DS_Store
+Thumbs.db
+docker-compose.override.yml
+PROMPT.md
