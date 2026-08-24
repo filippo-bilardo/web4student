@@ -115,8 +115,8 @@ RUN npm install -g nodemon express
 # Crea directory per il daemon SSH
 RUN mkdir /var/run/sshd
 
-# Imposta password per root (solo per test, sconsigliato in produzione)
-#RUN echo 'root:root123' | chpasswd
+# Mantiene l'account root bloccato per l'accesso SSH.
+#RUN passwd -l root
 # Configura SSH per permettere login root (solo per ambiente educativo)
 #RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
@@ -127,9 +127,7 @@ RUN sed -i 's/Port 22/Port 22/' /etc/ssh/sshd_config
 # CREAZIONE UTENTI AMMINISTRATORI - Account persistenti per gestione sistema
 # ===========================================================================
 RUN useradd -m -s /bin/bash -G sudo prof \
-    && echo 'prof:prof123' | chpasswd \
     && useradd -m -s /bin/bash -G sudo fb \
-    && echo 'fb:fb123' | chpasswd \
     && mkdir -p /home/prof/www /home/fb/www \
     && chown -R prof:prof /home/prof \
     && chown -R fb:fb /home/fb \

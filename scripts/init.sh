@@ -3,6 +3,23 @@
 # Script di inizializzazione per Web4Student
 echo "🚀 Avvio Web4Student..."
 
+require_admin_accounts() {
+    : "${ADMIN1:?Impostare ADMIN1 nel file .env}"
+    : "${ADMIN1_PWD:?Impostare ADMIN1_PWD nel file .env}"
+    : "${ADMIN2:?Impostare ADMIN2 nel file .env}"
+    : "${ADMIN2_PWD:?Impostare ADMIN2_PWD nel file .env}"
+
+    if ! [[ "$ADMIN1" =~ ^[a-z_][a-z0-9_-]*$ ]] || ! [[ "$ADMIN2" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+        echo "❌ ADMIN1 e ADMIN2 devono essere username Linux validi"
+        exit 1
+    fi
+
+    if [ "$ADMIN1" = "$ADMIN2" ]; then
+        echo "❌ ADMIN1 e ADMIN2 devono essere diversi"
+        exit 1
+    fi
+}
+
 ensure_runtime_dirs() {
     mkdir -p /run/sshd /run/apache2 /run/mysqld
     chown root:root /run/sshd /run/apache2
@@ -60,10 +77,7 @@ start_required_service() {
 }
 
 ensure_admin_sudoers() {
-    cat > /etc/sudoers.d/web4student-admins << 'EOF'
-prof ALL=(ALL) ALL
-fb ALL=(ALL) ALL
-EOF
+    printf '%s ALL=(ALL) ALL\n%s ALL=(ALL) ALL\n' "$ADMIN1" "$ADMIN2" > /etc/sudoers.d/web4student-admins
     chmod 440 /etc/sudoers.d/web4student-admins
 }
 
@@ -134,6 +148,7 @@ EOF
 }
 
 # Setup disk quotas after user creation
+require_admin_accounts
 setup_disk_quotas
 
 ensure_apache_homepage() {
@@ -181,19 +196,19 @@ echo "🔐 Ripristino stato account persistente..."
 
 echo "🛡️ Allineamento utenti amministratori..."
 ensure_admin_sudoers
-ensure_admin_account prof prof123
-ensure_admin_account fb fb123
-ensure_admin_homepage prof "Area Professore"
-ensure_admin_homepage fb "Area Amministratore FB"
+ensure_admin_account "$ADMIN1" "$ADMIN1_PWD"
+ensure_admin_account "$ADMIN2" "$ADMIN2_PWD"
+ensure_admin_homepage "$ADMIN1" "Area Amministratore 1"
+ensure_admin_homepage "$ADMIN2" "Area Amministratore 2"
 ensure_apache_homepage
 
-# Verifica e corregge la home directory dell'utente prof
-echo "👨‍🏫 Verifica home directory utente prof..."
-if [ ! -d "/home/prof" ]; then
-    echo "⚠️ Home directory prof non trovata, creazione..."
-    mkdir -p /home/prof
-    chown prof:prof /home/prof
-    chmod 755 /home/prof
+# Verifica e corregge la home directory del primo amministratore
+echo "👨‍🏫 Verifica home directory utente $ADMIN1..."
+if [ ! -d "/home/$ADMIN1" ]; then
+    echo "⚠️ Home directory $ADMIN1 non trovata, creazione..."
+    mkdir -p "/home/$ADMIN1"
+    chown "$ADMIN1:$ADMIN1" "/home/$ADMIN1"
+    chmod 755 "/home/$ADMIN1"
 fi
 
 # Verifica e corregge i permessi di MySQL se necessario

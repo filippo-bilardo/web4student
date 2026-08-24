@@ -93,7 +93,7 @@ docker compose up -d
 ```bash
 # SSH come amministratore
 ssh prof@localhost -p 2222
-# Password: prof123
+# Password: quella definita in .env per ADMIN1
 
 # Oppure via web
 open http://localhost:8080
@@ -276,7 +276,7 @@ mysql -h localhost -P 3307 -u admin -p
 - ✅ **Apache Configurato**: Solo file web accessibili pubblicamente
 
 ### 📋 Checklist Sicurezza
-- [ ] Cambiare password iniziali (prof123, student123)
+- [ ] Impostare password robuste nel file `.env`
 - [ ] Rimuovere file CSV dopo creazione utenti
 - [ ] Configurare firewall se necessario
 - [ ] Monitorare log di accesso

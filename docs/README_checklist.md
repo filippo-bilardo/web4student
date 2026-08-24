@@ -111,7 +111,7 @@ Questa checklist ti guida attraverso **4 fasi principali**:
 - [ ] **Cambia password amministratore**
   ```bash
   ssh prof@localhost -p 2222
-  passwd  # Cambia da prof123
+  passwd  # Cambia la password definita dall'amministratore
   exit
   ```
 
@@ -139,7 +139,7 @@ Questa checklist ti guida attraverso **4 fasi principali**:
 - [ ] **Connessione amministratore**
   ```bash
   ssh prof@localhost -p 2222
-  # Password: prof123 (o quella cambiata)
+  # Password: quella definita in .env (o quella cambiata)
   whoami  # Dovrebbe mostrare: prof
   exit
   ```

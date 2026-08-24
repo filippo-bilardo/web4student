@@ -115,6 +115,12 @@ services:
       # TIMEZONE: Imposta il fuso orario del sistema
       # Importante per log e timestamp corretti
       - TZ=Europe/Rome
+
+      # Account amministrativi SSH, definiti nel file .env locale
+      - ADMIN1=${ADMIN1:?Impostare ADMIN1 in .env}
+      - ADMIN1_PWD=${ADMIN1_PWD:?Impostare ADMIN1_PWD in .env}
+      - ADMIN2=${ADMIN2:?Impostare ADMIN2 in .env}
+      - ADMIN2_PWD=${ADMIN2_PWD:?Impostare ADMIN2_PWD in .env}
       
       # MYSQL CONFIGURAZIONE: Password e utenti database
       # Utilizzate dagli script di inizializzazione

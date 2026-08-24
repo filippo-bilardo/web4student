@@ -3,6 +3,8 @@
 set -euo pipefail
 
 DEFAULT_PASSWORD="${DEFAULT_PASSWORD:-student123}"
+ADMIN1="${ADMIN1:-prof}"
+ADMIN2="${ADMIN2:-fb}"
 DRY_RUN=0
 
 if [ "${1:-}" = "--dry-run" ]; then
@@ -177,11 +179,9 @@ while IFS= read -r -d '' home_dir; do
     class_dir="$(dirname "$home_dir")"
     class_name="$(basename "$class_dir")"
 
-    case "$class_name" in
-        fb|prof|shared|.web4student)
-            continue
-            ;;
-    esac
+    if [ "$class_name" = "$ADMIN1" ] || [ "$class_name" = "$ADMIN2" ] || [ "$class_name" = "shared" ] || [ "$class_name" = ".web4student" ]; then
+        continue
+    fi
 
     username="$(resolve_username_from_home "$home_dir")"
 
