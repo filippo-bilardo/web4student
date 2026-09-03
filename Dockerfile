@@ -230,6 +230,8 @@ RUN chmod +x /usr/local/bin/*.sh
 # invece di generarla con comandi echo
 COPY volumes/config/index.html /var/www/html/index.html
 COPY volumes/config/index.html /usr/local/share/web4student/webroot/index.html
+COPY volumes/config/favicon.svg /var/www/html/favicon.svg
+COPY volumes/config/favicon.svg /usr/local/share/web4student/webroot/favicon.svg
 
 # ===========================================================================
 # ADMINER - Tool di gestione database web-based

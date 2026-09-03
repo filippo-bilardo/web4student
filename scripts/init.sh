@@ -158,7 +158,7 @@ ensure_apache_homepage() {
 
     mkdir -p "$web_root"
 
-    for asset in index.html adminer.php infrastruttura.html; do
+    for asset in index.html adminer.php infrastruttura.html favicon.svg; do
         if [ ! -s "$web_root/$asset" ] && [ -f "$template_root/$asset" ]; then
             install -o root -g root -m 644 "$template_root/$asset" "$web_root/$asset"
         fi
