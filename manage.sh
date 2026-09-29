@@ -25,9 +25,11 @@ show_usage() {
     echo "  shell             - Accede alla shell del container"
     echo "  status            - Mostra lo stato del container"
     echo "  create-users      - Crea utenti dal file students.csv"
+    echo "  create-users-file - Crea utenti da un file CSV diverso"
     echo "  restore-users     - Ripristina account Linux dalle home persistenti"
     echo "  configure-aliases - Riconfigura alias Apache per utenti esistenti"
     echo "  student-usage     - Mostra lo spazio occupato dalle home degli studenti"
+    echo "  system-usage      - Mostra studenti loggati e utilizzo CPU/RAM"
     echo "  mysql-status      - Verifica stato MySQL/MariaDB"
     echo "  mysql-fix         - Corregge problemi MySQL"
     echo "  mysql-root        - Accede a MySQL come root"
@@ -118,10 +120,53 @@ case "$1" in
         docker compose exec web4student /usr/local/bin/create_student_accounts.sh /home/students.csv
         # Genera le configurazioni degli alias Apache per le home degli studenti
         echo "🔧 Configurazione alias Apache..."
-        docker compose exec web4student /usr/local/bin/configure_user_aliases.sh
+        docker compose exec web4student /usr/local/bin/configure_user_aliases_safe.sh
         # Salva le credenziali e lo stato degli utenti per permettere futuri ripristini rapidi
         docker compose exec web4student /usr/local/bin/manage_auth_state.sh export
         echo "✅ Utenti creati e configurati!"
+        ;;
+
+    # Crea account studenti usando un file CSV alternativo montato in /home.
+    # Esempio: ./manage.sh create-users-file volumes/students/2026_5Fi.csv
+    create-users-file)
+        if [ -z "$2" ]; then
+            echo "❌ Specifica il file CSV da utilizzare"
+            echo "Utilizzo: $0 create-users-file <file.csv>"
+            exit 1
+        fi
+
+        CSV_FILE="$2"
+        if [ ! -f "$CSV_FILE" ]; then
+            echo "❌ File CSV non trovato: $CSV_FILE"
+            exit 1
+        fi
+
+        # I file nella cartella volumes/students sono montati come /home/students.
+        case "$CSV_FILE" in
+            volumes/students/*)
+                CONTAINER_CSV="/home/students/${CSV_FILE#volumes/students/}"
+                ;;
+            /ws/container/web4student/volumes/students/*)
+                CONTAINER_CSV="/home/students/${CSV_FILE#/ws/container/web4student/volumes/students/}"
+                ;;
+            volumes/students.csv)
+                CONTAINER_CSV="/home/students.csv"
+                ;;
+            /ws/container/web4student/volumes/students.csv)
+                CONTAINER_CSV="/home/students.csv"
+                ;;
+            *)
+                echo "❌ Il file deve trovarsi in volumes/students/ oppure essere volumes/students.csv"
+                exit 1
+                ;;
+        esac
+
+        echo "👥 Creazione utenti dal file $CSV_FILE..."
+        docker compose exec web4student /usr/local/bin/create_student_accounts.sh "$CONTAINER_CSV"
+        echo "🔧 Configurazione alias Apache..."
+        docker compose exec web4student /usr/local/bin/configure_user_aliases_safe.sh
+        docker compose exec web4student /usr/local/bin/manage_auth_state.sh export
+        echo "✅ Utenti creati e configurati dal file $CSV_FILE!"
         ;;
 
     # Ripristina gli account di sistema Linux a partire dalle home directory esistenti
@@ -137,7 +182,7 @@ case "$1" in
     # Ricrea o riconfigura i file di alias web Apache per ciascun utente studente presente nel sistema.
     configure-aliases)
         echo "🔧 Riconfigurazione alias Apache per utenti esistenti..."
-        docker compose exec web4student /usr/local/bin/configure_user_aliases.sh
+        docker compose exec web4student /usr/local/bin/configure_user_aliases_safe.sh
         echo "✅ Alias riconfigurati!"
         ;; 
 
@@ -145,6 +190,11 @@ case "$1" in
     student-usage)
         echo "📦 Riepilogo spazio occupato dalle home degli studenti..."
         ./scripts/student_usage_summary.sh
+        ;;
+
+    # Mostra le sessioni degli studenti e le risorse utilizzate dal container.
+    system-usage)
+        docker compose exec web4student /usr/local/bin/system_usage.sh
         ;;
     
     # Controlla lo stato di MySQL/MariaDB all'interno del container tramite script dedicato

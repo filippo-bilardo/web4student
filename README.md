@@ -13,7 +13,7 @@
 Web4Student è un **ambiente di sviluppo educativo completo** basato su Docker che fornisce tutto il necessario per insegnare e imparare:
 
 - 🖥️ **Programmazione**: C/C++, Python, Java, JavaScript, PHP
-- 🌐 **Sviluppo Web**: Apache, PHP, MySQL con interfaccia Adminer
+- 🌐 **Sviluppo Web**: Apache, PHP, MySQL con interfaccia Adminer, Node.js
 - 🔧 **Strumenti DevOps**: Git, SSH, Docker, container orchestration
 - 👥 **Gestione Utenti**: Account individuali con isolamento completo
 - 📊 **Database**: MySQL/MariaDB con database personali per studente
@@ -339,16 +339,6 @@ docker exec -it web4student bash
 # Verifica processi
 docker exec web4student ps aux
 ```
-
----
-
-## 📚 Documentazione Estesa
-
-- 📖 **[README_avvio.md](README_avvio.md)** - Guida completa all'avvio
-- � **[README_checklist.md](README_checklist.md)** - Checklist operativo passo-passo
-- �🐛 **[README_debug.md](README_debug.md)** - Troubleshooting avanzato
-- 🏗️ **[volumes/config/infrastruttura.html](volumes/config/infrastruttura.html)** - Setup infrastrutturale
-- 📋 **[README_checklist.md](README_checklist.md)** - Checklist operativo
 
 ---
 

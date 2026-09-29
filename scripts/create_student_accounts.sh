@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Script per creare account studenti da file CSV
-# Formato CSV: classe,cognome,nome,username
+# Formato CSV: anno,classe,cognome,nome,username
+# È mantenuto il supporto al vecchio formato classe,cognome,nome,username.
 #
 # 🔒 MISURE DI SICUREZZA IMPLEMENTATE:
 # - File CSV protetto (chmod 600, chown root:root)
@@ -13,6 +14,11 @@
 # - Utenti esistenti: permessi corretti automaticamente
 
 CSV_FILE="$1"
+STUDENT_GROUP="web4students"
+
+if ! getent group "$STUDENT_GROUP" >/dev/null; then
+    groupadd "$STUDENT_GROUP"
+fi
 
 if [ ! -f "$CSV_FILE" ]; then
     echo "❌ Errore: File CSV non trovato: $CSV_FILE"
@@ -28,7 +34,24 @@ chmod 600 "$CSV_FILE"
 echo "🔐 File CSV protetto: solo root può accedere"
 
 # Salta l'header del CSV se presente
-tail -n +2 "$CSV_FILE" | while IFS=',' read -r classe cognome nome username; do
+tail -n +2 "$CSV_FILE" | while IFS=',' read -r -a fields; do
+    # Il formato con anno crea home in /home/anno/classe/username.
+    # Il formato precedente continua a usare /home/classe/username.
+    if [ "${#fields[@]}" -ge 5 ]; then
+        anno="${fields[0]}"
+        classe="${fields[1]}"
+        cognome="${fields[2]}"
+        nome="${fields[3]}"
+        username="${fields[4]}"
+    else
+        anno=""
+        classe="${fields[0]}"
+        cognome="${fields[1]}"
+        nome="${fields[2]}"
+        username="${fields[3]}"
+    fi
+
+    anno=$(echo "$anno" | xargs)
     # Rimuove spazi bianchi
     classe=$(echo "$classe" | xargs)
     cognome=$(echo "$cognome" | xargs) 
@@ -36,19 +59,23 @@ tail -n +2 "$CSV_FILE" | while IFS=',' read -r classe cognome nome username; do
     username=$(echo "$username" | xargs)
     
     if [ -z "$classe" ] || [ -z "$nome" ] || [ -z "$cognome" ] || [ -z "$username" ]; then
-        echo "⚠️  Riga non valida: $classe,$cognome,$nome,$username"
+        echo "⚠️  Riga non valida: $anno,$classe,$cognome,$nome,$username"
         continue
     fi
     
-    # Crea la directory di classe se non esiste
-    CLASS_DIR="/home/$classe"
+    # Crea la directory anno/classe se l'anno è presente nel CSV.
+    if [ -n "$anno" ]; then
+        CLASS_DIR="/home/$anno/$classe"
+    else
+        CLASS_DIR="/home/$classe"
+    fi
     if [ ! -d "$CLASS_DIR" ]; then
         mkdir -p "$CLASS_DIR"
         echo "📁 Creata directory classe: $CLASS_DIR"
     fi
     
     # Directory home dell'utente
-    USER_HOME="$CLASS_DIR/$cognome.$nome"
+    USER_HOME="$CLASS_DIR/$username"
     
     # Crea database personale per l'utente (anche se utente esiste già)
     mysql -u root -e "CREATE DATABASE IF NOT EXISTS \`db_$username\`;"
@@ -67,6 +94,7 @@ tail -n +2 "$CSV_FILE" | while IFS=',' read -r classe cognome nome username; do
     
     # Crea l'utente con home directory personalizzata
     useradd -m -d "$USER_HOME" -s /bin/bash "$username"
+    usermod -a -G "$STUDENT_GROUP" "$username"
     
     # Imposta la password di default
     echo "$username:student123" | chpasswd
@@ -330,7 +358,11 @@ EOF
     # Apache può servire: .jpg, .png, .gif, .css, .js, .txt, .pdf, etc.
     echo "  📸 Tutti i file web sono accessibili da Apache (immagini, CSS, JS, etc.)"
     
-    echo "✅ Creato utente: $username ($nome $cognome) - Classe $classe"
+    if [ -n "$anno" ]; then
+        echo "✅ Creato utente: $username ($nome $cognome) - Anno $anno, classe $classe"
+    else
+        echo "✅ Creato utente: $username ($nome $cognome) - Classe $classe"
+    fi
     echo "   🏠 Home: $USER_HOME"
     echo "   🌐 Web: http://w4s.filippobilardo.it/~$username"
     echo "   🗄️ Database: db_$username"

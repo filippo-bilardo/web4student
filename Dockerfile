@@ -246,6 +246,11 @@ COPY volumes/config/adminer.php /usr/local/share/web4student/webroot/adminer.php
 # Copia la documentazione dell'infrastruttura nella directory web
 COPY volumes/config/infrastruttura.html /var/www/html/infrastruttura.html
 COPY volumes/config/infrastruttura.html /usr/local/share/web4student/webroot/infrastruttura.html
+COPY volumes/config/4c.php /var/www/html/4c.php
+COPY volumes/config/4c.php /usr/local/share/web4student/webroot/4c.php
+
+# Limite processi per gli account studenti (protezione anti-fork-bomb)
+COPY volumes/config/web4student-students.conf /etc/security/limits.d/web4student-students.conf
 
 # ===========================================================================
 # ESPOSIZIONE PORTE - Servizi accessibili dall'esterno

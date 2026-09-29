@@ -15,7 +15,7 @@ echo "" > "$TEMP_CONF"
 find /home -name "www" -type d 2>/dev/null | while read www_dir; do
     # Estrai il nome utente dalla directory
     user_home=$(dirname "$www_dir")
-    username=$(basename "$user_home" | cut -d'.' -f2 | tr '[:upper:]' '[:lower:]')
+    username=$(basename "$user_home" | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g')
     
     if [ -n "$username" ] && [ "$username" != "www" ]; then
         echo "  📁 Configurando alias per utente: $username"

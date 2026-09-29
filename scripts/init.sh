@@ -257,6 +257,9 @@ fi
 echo "♻️  Verifica e ripristino account da home persistenti..."
 /usr/local/bin/restore_persisted_accounts.sh
 
+echo "🛡️  Applicazione dei limiti anti-fork-bomb agli studenti..."
+/usr/local/bin/configure_student_limits.sh
+
 echo "💾 Salvataggio stato account persistente..."
 /usr/local/bin/manage_auth_state.sh export
 

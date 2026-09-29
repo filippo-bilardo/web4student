@@ -53,7 +53,7 @@ services:
       - "2223:2223" # esercizi con le socket
       - "2224:2224" # esercizi con le socket
       - "2225:5555" # esercizi con le socket
-      - "2226-2999:2226-2999" # range porte VM esposte al container
+      - "2226-2249:2226-2249" # range porte VM esposte al container
 
     expose:
       - "80"     # HTTP per nginx-proxy-manager
@@ -107,6 +107,8 @@ services:
       # VOLUME 5: File CSV studenti per creazione automatica account
       # Monta ./students.csv dell'host su /home/students.csv del container
       - ./volumes/students.csv:/home/students.csv
+      # Cartella per file CSV aggiuntivi o personalizzati
+      - ./volumes/students/:/home/students/ 
 
     # ===========================================================================
     # VARIABILI D'AMBIENTE - Configurazione runtime del container
