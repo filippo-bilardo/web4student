@@ -6,7 +6,7 @@ volumes/students.csv
 volumes/students*.csv
 volumes/students/
 *students*.csv
-volumes/config/4c.php
+volumes/www/4c.php
 
 # prompt
 PROMPT.md

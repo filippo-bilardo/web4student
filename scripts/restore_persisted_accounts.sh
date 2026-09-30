@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-DEFAULT_PASSWORD="${DEFAULT_PASSWORD:-student123}"
+DEFAULT_PASSWORD="${STUDENT_DEFAULT_PASSWORD:?STUDENT_DEFAULT_PASSWORD non impostata}"
 ADMIN1="${ADMIN1:-prof}"
 ADMIN2="${ADMIN2:-fb}"
 DRY_RUN=0
@@ -83,7 +83,7 @@ build_candidates() {
 }
 
 load_mysql_users() {
-    if ! mysql -u root -Nse "SELECT DISTINCT User FROM mysql.user WHERE User NOT IN ('mysql','mariadb.sys','root','admin','PUBLIC','') ORDER BY User;" > "$MYSQL_USERS_FILE" 2>/dev/null; then
+    if ! mysql -u root -Nse "SELECT DISTINCT User FROM mysql.user WHERE User NOT IN ('mysql','mariadb.sys','root','${MYSQL_ADMIN_USER:-admin}','PUBLIC','') ORDER BY User;" > "$MYSQL_USERS_FILE" 2>/dev/null; then
         : > "$MYSQL_USERS_FILE"
         log "⚠️  MySQL non raggiungibile: il ripristino userà solo l'inferenza dal percorso home"
     fi
@@ -206,6 +206,7 @@ while IFS= read -r -d '' home_dir; do
         run useradd -M -d "$home_dir" -s /bin/bash "$username"
         if [ "$DRY_RUN" -eq 0 ]; then
             echo "$username:$DEFAULT_PASSWORD" | chpasswd
+            chage -d 0 "$username"
         else
             printf '[dry-run] chpasswd for %s\n' "$username"
         fi
@@ -215,7 +216,8 @@ while IFS= read -r -d '' home_dir; do
     run usermod -a -G www-data "$username"
     ensure_mysql_account "$username"
     fix_permissions "$username" "$class_dir" "$home_dir"
-done < <(find /home -mindepth 2 -maxdepth 2 -type d ! -path '/home/fb/*' ! -path '/home/prof/*' -print0 | sort -z)
+done < <(find /home -mindepth 3 -maxdepth 5 -type d -name www \
+    ! -path '/home/fb/*' ! -path '/home/prof/*' -printf '%h\0' | sort -z)
 
 log "✅ Ripristino completato"
 log "   Account creati: $created"

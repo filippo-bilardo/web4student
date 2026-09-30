@@ -49,7 +49,7 @@ Perfetto per **scuole, università e corsi di programmazione**!
 - ✅ **Account Automatici**: Creazione da file CSV
 - ✅ **Home Isolate**: Directory personali protette
 - ✅ **Database Personali**: Schema dedicato per studente
-- ✅ **Quote Disco**: Quote configurate per gli account amministrativi; le quote studenti sono gestibili separatamente
+- ✅ **Quote Disco**: nuovi studenti 8 MB soft/10 MB hard; amministratori 50 MB soft/100 MB hard. L'applicazione richiede che il filesystem host montato su `/home` sia abilitato alle quote utente (`usrquota`); in caso contrario gli script mostrano un avviso
 - ✅ **Quota Processi**: Gli account del gruppo `web4students` sono limitati a 100 processi per utente
 - ✅ **SSH Access**: Connessione sicura per ogni studente
 
@@ -92,6 +92,15 @@ cd web4student
 docker compose up -d
 ```
 
+Il bootstrap avvia i servizi, prepara gli account amministrativi e ripristina
+automaticamente gli account studenti dalle home persistenti. La gestione
+manuale resta disponibile con `create-users`, `create-users-file` e
+`restore-users`.
+
+I file del sito principale sono persistenti in `volumes/www`, montati come
+DocumentRoot Apache. Per aggiornare la homepage basta modificare
+`volumes/www/index.html`; non è necessario ricostruire l'immagine.
+
 ### 3. Accedi al Sistema
 ```bash
 # SSH come amministratore
@@ -110,8 +119,7 @@ open http://localhost:8080
 # Crea utenti da un CSV alternativo
 ./manage.sh create-users-file volumes/students/2026_5Fi.csv
 
-# Se il container è stato ricreato, ripristina anche gli account
-# presenti nei volumi ma assenti nell'attuale students.csv
+# Se il container è stato ricreato, ripristina gli account dalle home persistenti
 ./manage.sh restore-users
 
 # Riepilogo spazio occupato dalle home degli studenti
@@ -163,10 +171,21 @@ web4student/
 ```yaml
 # docker-compose.yml
 environment:
-  - MYSQL_ROOT_PASSWORD=admin123
-  - MYSQL_DATABASE=web4student
+  - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+  - MYSQL_ADMIN_USER=${MYSQL_ADMIN_USER}
+  - MYSQL_ADMIN_PASSWORD=${MYSQL_ADMIN_PASSWORD}
   - APACHE_RUN_USER=www-data
   - APACHE_RUN_GROUP=www-data
+```
+
+Le password non devono essere scritte in `docker-compose.yml` o nel Dockerfile.
+Definirle nel file locale `.env`, escluso da Git:
+
+```dotenv
+MYSQL_ROOT_PASSWORD=<segreto>
+MYSQL_ADMIN_USER=admin
+MYSQL_ADMIN_PASSWORD=<segreto>
+STUDENT_DEFAULT_PASSWORD=<segreto>
 ```
 
 ### Porte Mappate
@@ -185,7 +204,7 @@ environment:
 ```bash
 # Connettiti via SSH
 ssh username@localhost -p 2222
-# Password iniziale: student123
+# Password iniziale: valore di STUDENT_DEFAULT_PASSWORD
 
 # Cambia password
 passwd
@@ -260,6 +279,9 @@ EOF
 ./manage.sh restore-users # Ricrea account dalle home persistenti
 ./manage.sh student-usage # Riepilogo spazio home studenti
 ./manage.sh system-usage  # Studenti loggati e CPU/RAM
+./manage.sh configure-quotas # Applica quote disco amministrative
+./manage.sh configure-limits # Applica limite processi studenti
+./manage.sh check         # Suite di controlli
 ./manage.sh backup       # Backup dati
 ./manage.sh clean        # Reset completo
 ```

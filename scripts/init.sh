@@ -8,6 +8,10 @@ require_admin_accounts() {
     : "${ADMIN1_PWD:?Impostare ADMIN1_PWD nel file .env}"
     : "${ADMIN2:?Impostare ADMIN2 nel file .env}"
     : "${ADMIN2_PWD:?Impostare ADMIN2_PWD nel file .env}"
+    : "${MYSQL_ROOT_PASSWORD:?Impostare MYSQL_ROOT_PASSWORD nel file .env}"
+    : "${MYSQL_ADMIN_USER:?Impostare MYSQL_ADMIN_USER nel file .env}"
+    : "${MYSQL_ADMIN_PASSWORD:?Impostare MYSQL_ADMIN_PASSWORD nel file .env}"
+    : "${STUDENT_DEFAULT_PASSWORD:?Impostare STUDENT_DEFAULT_PASSWORD nel file .env}"
 
     if ! [[ "$ADMIN1" =~ ^[a-z_][a-z0-9_-]*$ ]] || ! [[ "$ADMIN2" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
         echo "❌ ADMIN1 e ADMIN2 devono essere username Linux validi"
@@ -24,42 +28,6 @@ ensure_runtime_dirs() {
     mkdir -p /run/sshd /run/apache2 /run/mysqld
     chown root:root /run/sshd /run/apache2
     chown mysql:mysql /run/mysqld
-}
-
-# Setup disk quotas per utente per le home directories
-setup_disk_quotas() {
-    echo "💾 Impostazione quote disco per utenti..."
-
-    # Abilita le quote sul filesystem /home
-    # Questo richiede che il filesystem supporti le quote (ext4, xfs, etc.)
-    if [ -d "/home" ]; then
-        # Inizializza il file delle quote se non esiste
-        if [ ! -f /home/aquota.user ]; then
-            quotactl -x /home 2>/dev/null || echo "⚠️ Impossibile attivare quote su /home"
-        fi
-
-        # Attiva le quote per utente su /home
-        quotaon -v /home 2>/dev/null || echo "⚠️ impossibile attivare quotaon su /home"
-    fi
-
-    # Imposta quote per utenti noti (limite: 100MB, soft: 50MB per home directory)
-    # Formato: setquota [filesystem] [username] [blocks] [inodes] [blocks_soft] [inodes_soft] [hardlimit] [inode_hardlimit] [date]
-    # 100MB = 102400 blocks (da 1KB ciascuno)
-
-    # Quote per utente amministratore fb
-    if id fb >/dev/null 2>&1; then
-        setquota -F /home fb 102400 0 51200 0 102400 0 0 2>/dev/null
-        echo "  ✅ Quote impostate per utente: fb (100MB soft, 100MB hard)"
-    fi
-
-    # Quote per utente amministratore prof
-    if id prof >/dev/null 2>&1; then
-        setquota -F /home prof 102400 0 51200 0 102400 0 0 2>/dev/null
-        echo "  ✅ Quote impostate per utente: prof (100MB soft, 100MB hard)"
-    fi
-
-    # Quote per studenti (verranno applicate quando vengono creati)
-    echo "  ℹ️ Quote per studenti impostate di default (aggiustabili per cada utente)"
 }
 
 start_required_service() {
@@ -147,33 +115,21 @@ EOF
     chmod 644 "$www_dir/index.html" "$www_dir/info.php"
 }
 
-# Setup disk quotas after user creation
-require_admin_accounts
-setup_disk_quotas
-
-ensure_apache_homepage() {
-    local template_root="/usr/local/share/web4student/webroot"
-    local web_root="/var/www/html"
-    local asset
-
-    mkdir -p "$web_root"
-
-    for asset in index.html adminer.php infrastruttura.html favicon.svg; do
-        if [ ! -s "$web_root/$asset" ] && [ -f "$template_root/$asset" ]; then
-            install -o root -g root -m 644 "$template_root/$asset" "$web_root/$asset"
-        fi
-    done
+restore_persistent_student_accounts() {
+    echo "♻️ Ripristino automatico degli account studenti..."
+    /usr/local/bin/manage_auth_state.sh restore
+    /usr/local/bin/restore_persisted_accounts.sh
+    /usr/local/bin/configure_user_aliases.sh
+    /usr/local/bin/configure_disk_quotas.sh
+    /usr/local/bin/configure_student_limits.sh
+    /usr/local/bin/manage_auth_state.sh export
+    echo "✅ Account studenti e alias ripristinati"
 }
+
+require_admin_accounts
 
 cleanup() {
     echo "🛑 Arresto Web4Student..."
-    /usr/local/bin/manage_auth_state.sh export 2>/dev/null || true
-
-    if [ -n "${auth_sync_pid:-}" ]; then
-        kill "$auth_sync_pid" 2>/dev/null || true
-        wait "$auth_sync_pid" 2>/dev/null || true
-    fi
-
     if [ -n "${log_tail_pid:-}" ]; then
         kill "$log_tail_pid" 2>/dev/null || true
         wait "$log_tail_pid" 2>/dev/null || true
@@ -184,23 +140,12 @@ cleanup() {
 
 trap cleanup TERM INT
 
-# Verifica la directory condivisa persistente per lo stato account
-echo "📁 Verifica directory condivisa persistente..."
-mkdir -p /home/shared
-chown root:root /home/shared
-chmod 755 /home/shared
-
-# Ripristina lo stato persistente degli account Linux (passwd/shadow/group/gshadow)
-echo "🔐 Ripristino stato account persistente..."
-/usr/local/bin/manage_auth_state.sh restore
-
 echo "🛡️ Allineamento utenti amministratori..."
 ensure_admin_sudoers
 ensure_admin_account "$ADMIN1" "$ADMIN1_PWD"
 ensure_admin_account "$ADMIN2" "$ADMIN2_PWD"
 ensure_admin_homepage "$ADMIN1" "Area Amministratore 1"
 ensure_admin_homepage "$ADMIN2" "Area Amministratore 2"
-ensure_apache_homepage
 
 # Verifica e corregge la home directory del primo amministratore
 echo "👨‍🏫 Verifica home directory utente $ADMIN1..."
@@ -232,15 +177,20 @@ echo "⏳ Attesa avvio MySQL..."
 sleep 5
 
 # Verifica se l'utente admin esiste, se no lo crea
-mysql -u root -e "SELECT User FROM mysql.user WHERE User='admin';" 2>/dev/null | grep -q admin
+mysql -u root -e "SELECT User FROM mysql.user WHERE User='$MYSQL_ADMIN_USER';" 2>/dev/null | grep -q "$MYSQL_ADMIN_USER"
 if [ $? -ne 0 ]; then
-    echo "� Creazione utente admin MySQL..."
-    mysql -u root -e "CREATE USER IF NOT EXISTS 'admin'@'%' IDENTIFIED BY 'admin123';"
-    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' WITH GRANT OPTION;"
-    mysql -u root -e "CREATE USER IF NOT EXISTS 'admin'@'localhost' IDENTIFIED BY 'admin123';"
-    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'admin'@'localhost' WITH GRANT OPTION;"
+    echo "👤 Creazione utente amministratore MySQL..."
+    mysql -u root -e "CREATE USER IF NOT EXISTS '$MYSQL_ADMIN_USER'@'%' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';"
+    mysql -u root -e "ALTER USER '$MYSQL_ADMIN_USER'@'%' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';"
+    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_ADMIN_USER'@'%' WITH GRANT OPTION;"
+    mysql -u root -e "CREATE USER IF NOT EXISTS '$MYSQL_ADMIN_USER'@'localhost' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';"
+    mysql -u root -e "ALTER USER '$MYSQL_ADMIN_USER'@'localhost' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';"
+    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_ADMIN_USER'@'localhost' WITH GRANT OPTION;"
     mysql -u root -e "FLUSH PRIVILEGES;"
 fi
+mysql -u root -e "ALTER USER '$MYSQL_ADMIN_USER'@'%' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';"
+mysql -u root -e "ALTER USER '$MYSQL_ADMIN_USER'@'localhost' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';"
+mysql -u root -e "FLUSH PRIVILEGES;"
 
 # Avvia SSH
 start_required_service ssh "🔑 Avvio del servizio SSH..."
@@ -248,36 +198,21 @@ start_required_service ssh "🔑 Avvio del servizio SSH..."
 # Avvia Apache
 start_required_service apache2 "🌐 Avvio del server web Apache..."
 
-# Verifica se esistono utenti da creare
-if [ -f /home/students.csv ]; then
-    echo "👥 Trovato file students.csv, creazione account studenti..."
-    /usr/local/bin/create_student_accounts.sh /home/students.csv
-fi
-
-echo "♻️  Verifica e ripristino account da home persistenti..."
-/usr/local/bin/restore_persisted_accounts.sh
-
-echo "🛡️  Applicazione dei limiti anti-fork-bomb agli studenti..."
-/usr/local/bin/configure_student_limits.sh
-
-echo "💾 Salvataggio stato account persistente..."
-/usr/local/bin/manage_auth_state.sh export
-
-echo "🔄 Avvio sincronizzazione stato account..."
-/usr/local/bin/manage_auth_state.sh daemon &
-auth_sync_pid=$!
-
 if ! service ssh status >/dev/null 2>&1 || ! service apache2 status >/dev/null 2>&1 || ! service mariadb status >/dev/null 2>&1; then
     echo "❌ Uno o più servizi essenziali non risultano attivi dopo il bootstrap"
     exit 1
 fi
 
+# Le home degli studenti sono persistenti, mentre /etc/passwd e /etc/shadow
+# appartengono al container. Ricrea quindi gli account a ogni avvio/ricreazione.
+restore_persistent_student_accounts
+
 echo "✅ Web4Student è pronto!"
 echo "🌐 Server web: http://localhost"
 echo "🔑 SSH: ssh username@localhost -p 2222"
 echo "🗄️ Database MySQL:"
-echo "  - Root: mysql -u root (senza password)"
-echo "  - Admin: mysql -u admin -p (password: admin123)"
+echo "  - Root: mysql -u root (socket locale)"
+echo "  - Admin: mysql -u $MYSQL_ADMIN_USER -p"
 
 # Mantiene il container in esecuzione
 tail -f /var/log/apache2/access.log /var/log/apache2/error.log &

@@ -16,7 +16,7 @@ if pgrep -x "mariadbd" > /dev/null; then
     fi
     
     # Verifica connessione come admin
-    if mysql -u admin -padmin123 -e "SELECT USER();" >/dev/null 2>&1; then
+    if MYSQL_PWD="${MYSQL_ADMIN_PASSWORD:?MYSQL_ADMIN_PASSWORD non impostata}" mysql -u "${MYSQL_ADMIN_USER:?MYSQL_ADMIN_USER non impostata}" -e "SELECT USER();" >/dev/null 2>&1; then
         echo "✅ Connessione admin funzionante"
     else
         echo "❌ Errore connessione admin"

@@ -15,6 +15,22 @@
 
 CSV_FILE="$1"
 STUDENT_GROUP="web4students"
+DEFAULT_PASSWORD="${STUDENT_DEFAULT_PASSWORD:?STUDENT_DEFAULT_PASSWORD non impostata}"
+
+apply_student_quota() {
+    local username="$1"
+    # Quote in blocchi da 1 KiB: 8 MiB soft, 10 MiB hard.
+    if quotaon_status=$(quotaon -p /home 2>&1) && \
+       printf '%s\n' "$quotaon_status" | grep -q "not found or has no quota enabled"; then
+        echo "  ⚠️ Quota disco non applicata a $username: /home non supporta quote attive"
+        return 0
+    fi
+    if setquota -u "$username" 8192 10240 0 0 /home 2>/dev/null; then
+        echo "  💾 Quota disco $username: 8MB soft, 10MB hard"
+    else
+        echo "  ⚠️ Quota disco non applicata a $username: /home non supporta quote attive"
+    fi
+}
 
 if ! getent group "$STUDENT_GROUP" >/dev/null; then
     groupadd "$STUDENT_GROUP"
@@ -95,9 +111,11 @@ tail -n +2 "$CSV_FILE" | while IFS=',' read -r -a fields; do
     # Crea l'utente con home directory personalizzata
     useradd -m -d "$USER_HOME" -s /bin/bash "$username"
     usermod -a -G "$STUDENT_GROUP" "$username"
+    apply_student_quota "$username"
     
     # Imposta la password di default
-    echo "$username:student123" | chpasswd
+    echo "$username:$DEFAULT_PASSWORD" | chpasswd
+    chage -d 0 "$username"
     
     # Crea la directory www per lo sviluppo web
     WWW_DIR="$USER_HOME/www"
@@ -279,7 +297,7 @@ Benvenuto/a $nome $cognome!
 
 La tua home directory: $USER_HOME
 Username: $username
-Password iniziale: student123 (CAMBIALA al primo accesso!)
+Password iniziale: password definita da STUDENT_DEFAULT_PASSWORD (CAMBIALA al primo accesso!)
 
 Directory web: ~/www/
 Il tuo sito web sarà disponibile su: http://w4s.filippobilardo.it/~$username
@@ -404,5 +422,5 @@ fi
 
 echo ""
 echo "🎉 Creazione account completata!"
-echo "📋 Ricorda agli studenti di cambiare la password iniziale: student123"
+echo "📋 Gli studenti devono cambiare la password al primo accesso"
 echo "🔒 Tutte le directory sono state protette con permessi sicuri"

@@ -190,17 +190,6 @@ RUN sed -i 's/bind-address.*/bind-address = 0.0.0.0/' /etc/mysql/mariadb.conf.d/
 # Questo evita problemi di permessi quando il container viene avviato
 RUN mysql_install_db --user=mysql --datadir=/var/lib/mysql
 
-# Configura gli utenti MySQL durante il build
-# Avvia temporaneamente MySQL per configurazione iniziale
-RUN service mariadb start && \
-    sleep 5 && \
-    mysql -u root -e "CREATE USER IF NOT EXISTS 'admin'@'%' IDENTIFIED BY 'admin123';" && \
-    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' WITH GRANT OPTION;" && \
-    mysql -u root -e "CREATE USER IF NOT EXISTS 'admin'@'localhost' IDENTIFIED BY 'admin123';" && \
-    mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'admin'@'localhost' WITH GRANT OPTION;" && \
-    mysql -u root -e "FLUSH PRIVILEGES;" && \
-    service mariadb stop
-
 # Assicura che la directory MySQL abbia i permessi corretti
 RUN chown -R mysql:mysql /var/lib/mysql
 
@@ -211,7 +200,7 @@ RUN chown -R mysql:mysql /var/lib/mysql
 RUN mkdir -p /home/shared
 
 # Crea directory principale per il web server
-RUN mkdir -p /var/www/html /usr/local/share/web4student/webroot
+RUN mkdir -p /var/www/html
 
 # ===========================================================================
 # COPIA SCRIPT E CONFIGURAZIONI - File necessari per il funzionamento
@@ -229,25 +218,20 @@ RUN chmod +x /usr/local/bin/*.sh
 # Copia la homepage personalizzata dal file di configurazione
 # invece di generarla con comandi echo
 COPY volumes/config/index.html /var/www/html/index.html
-COPY volumes/config/index.html /usr/local/share/web4student/webroot/index.html
 COPY volumes/config/favicon.svg /var/www/html/favicon.svg
-COPY volumes/config/favicon.svg /usr/local/share/web4student/webroot/favicon.svg
 
 # ===========================================================================
 # ADMINER - Tool di gestione database web-based
 # ===========================================================================
 # Copia Adminer nella directory web principale di Apache
 COPY volumes/config/adminer.php /var/www/html/adminer.php
-COPY volumes/config/adminer.php /usr/local/share/web4student/webroot/adminer.php
 
 # ===========================================================================
 # INFRASTRUTTURA - Documentazione tecnica del sistema
 # ===========================================================================
 # Copia la documentazione dell'infrastruttura nella directory web
 COPY volumes/config/infrastruttura.html /var/www/html/infrastruttura.html
-COPY volumes/config/infrastruttura.html /usr/local/share/web4student/webroot/infrastruttura.html
 COPY volumes/config/4c.php /var/www/html/4c.php
-COPY volumes/config/4c.php /usr/local/share/web4student/webroot/4c.php
 
 # Limite processi per gli account studenti (protezione anti-fork-bomb)
 COPY volumes/config/web4student-students.conf /etc/security/limits.d/web4student-students.conf

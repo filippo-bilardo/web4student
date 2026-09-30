@@ -84,6 +84,10 @@ services:
     # VOLUMI PERSISTENTI - Dati che sopravvivono al riavvio del container
     # ===========================================================================
     volumes:
+      # DocumentRoot persistente: le modifiche in volumes/www sono pubblicate
+      # direttamente da Apache senza ricostruire l'immagine.
+      - ./volumes/www:/var/www/html:rw
+
       # VOLUME 1: Home directory degli studenti
       # Monta ./volumes/home dell'host su /home del container
       # Modalità: lettura/scrittura per permettere creazione account e file
@@ -124,11 +128,11 @@ services:
       - ADMIN2=${ADMIN2:?Impostare ADMIN2 in .env}
       - ADMIN2_PWD=${ADMIN2_PWD:?Impostare ADMIN2_PWD in .env}
       
-      # MYSQL CONFIGURAZIONE: Password e utenti database
-      # Utilizzate dagli script di inizializzazione
-      - MYSQL_ROOT_PASSWORD=root123    # Password utente root MySQL
-      - MYSQL_USER=admin               # Nome utente amministratore
-      - MYSQL_PASSWORD=admin123        # Password utente amministratore
+      # Credenziali database definite nel file .env (non nel repository)
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?Impostare MYSQL_ROOT_PASSWORD in .env}
+      - MYSQL_ADMIN_USER=${MYSQL_ADMIN_USER:?Impostare MYSQL_ADMIN_USER in .env}
+      - MYSQL_ADMIN_PASSWORD=${MYSQL_ADMIN_PASSWORD:?Impostare MYSQL_ADMIN_PASSWORD in .env}
+      - STUDENT_DEFAULT_PASSWORD=${STUDENT_DEFAULT_PASSWORD:?Impostare STUDENT_DEFAULT_PASSWORD in .env}
       
       # APACHE CONFIGURAZIONE: Utente e gruppo per il web server
       # Definisce con quali permessi gira Apache

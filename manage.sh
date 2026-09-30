@@ -28,6 +28,9 @@ show_usage() {
     echo "  create-users-file - Crea utenti da un file CSV diverso"
     echo "  restore-users     - Ripristina account Linux dalle home persistenti"
     echo "  configure-aliases - Riconfigura alias Apache per utenti esistenti"
+    echo "  configure-quotas  - Applica le quote disco amministrative"
+    echo "  configure-limits  - Applica il limite processi agli studenti"
+    echo "  check             - Esegue i controlli di integrità del progetto"
     echo "  student-usage     - Mostra lo spazio occupato dalle home degli studenti"
     echo "  system-usage      - Mostra studenti loggati e utilizzo CPU/RAM"
     echo "  mysql-status      - Verifica stato MySQL/MariaDB"
@@ -46,6 +49,44 @@ show_usage() {
     echo "  $0 student-usage"
     echo "  $0 install-adminer"
     echo "  $0 shell"
+}
+
+create_users_from_csv() {
+    local csv_file="$1"
+    local container_csv
+
+    if [ ! -f "$csv_file" ]; then
+        echo "❌ File CSV non trovato: $csv_file"
+        return 1
+    fi
+
+    case "$csv_file" in
+        volumes/students/*)
+            container_csv="/home/students/${csv_file#volumes/students/}"
+            ;;
+        /ws/container/web4student/volumes/students/*)
+            container_csv="/home/students/${csv_file#/ws/container/web4student/volumes/students/}"
+            ;;
+        volumes/students.csv)
+            container_csv="/home/students.csv"
+            ;;
+        /ws/container/web4student/volumes/students.csv)
+            container_csv="/home/students.csv"
+            ;;
+        *)
+            echo "❌ Il file deve trovarsi in volumes/students/ oppure essere volumes/students.csv"
+            return 1
+            ;;
+    esac
+
+    echo "👥 Creazione utenti dal file $csv_file..."
+    docker compose exec web4student /usr/local/bin/create_student_accounts.sh "$container_csv"
+    echo "🔧 Configurazione alias Apache..."
+    docker compose exec web4student /usr/local/bin/configure_user_aliases.sh
+    docker compose exec web4student /usr/local/bin/configure_disk_quotas.sh
+    docker compose exec web4student /usr/local/bin/configure_student_limits.sh
+    docker compose exec web4student /usr/local/bin/manage_auth_state.sh export
+    echo "✅ Utenti creati e configurati dal file $csv_file!"
 }
 
 # Gestione dei vari comandi passati come primo argomento
@@ -110,20 +151,7 @@ case "$1" in
     # 3. Imposta gli alias Apache per rendere navigabili i siti degli studenti.
     # 4. Esporta lo stato di autenticazione per consentirne il ripristino futuro.
     create-users)
-        echo "👥 Creazione utenti dal file students.csv..."
-        # Verifica se il file contenente gli studenti è presente sul volume condiviso
-        if [ ! -f "volumes/students.csv" ]; then
-            echo "❌ File students.csv non trovato!"
-            exit 1
-        fi
-        # Esegue lo script di creazione account all'interno del container
-        docker compose exec web4student /usr/local/bin/create_student_accounts.sh /home/students.csv
-        # Genera le configurazioni degli alias Apache per le home degli studenti
-        echo "🔧 Configurazione alias Apache..."
-        docker compose exec web4student /usr/local/bin/configure_user_aliases_safe.sh
-        # Salva le credenziali e lo stato degli utenti per permettere futuri ripristini rapidi
-        docker compose exec web4student /usr/local/bin/manage_auth_state.sh export
-        echo "✅ Utenti creati e configurati!"
+        create_users_from_csv volumes/students.csv
         ;;
 
     # Crea account studenti usando un file CSV alternativo montato in /home.
@@ -134,39 +162,7 @@ case "$1" in
             echo "Utilizzo: $0 create-users-file <file.csv>"
             exit 1
         fi
-
-        CSV_FILE="$2"
-        if [ ! -f "$CSV_FILE" ]; then
-            echo "❌ File CSV non trovato: $CSV_FILE"
-            exit 1
-        fi
-
-        # I file nella cartella volumes/students sono montati come /home/students.
-        case "$CSV_FILE" in
-            volumes/students/*)
-                CONTAINER_CSV="/home/students/${CSV_FILE#volumes/students/}"
-                ;;
-            /ws/container/web4student/volumes/students/*)
-                CONTAINER_CSV="/home/students/${CSV_FILE#/ws/container/web4student/volumes/students/}"
-                ;;
-            volumes/students.csv)
-                CONTAINER_CSV="/home/students.csv"
-                ;;
-            /ws/container/web4student/volumes/students.csv)
-                CONTAINER_CSV="/home/students.csv"
-                ;;
-            *)
-                echo "❌ Il file deve trovarsi in volumes/students/ oppure essere volumes/students.csv"
-                exit 1
-                ;;
-        esac
-
-        echo "👥 Creazione utenti dal file $CSV_FILE..."
-        docker compose exec web4student /usr/local/bin/create_student_accounts.sh "$CONTAINER_CSV"
-        echo "🔧 Configurazione alias Apache..."
-        docker compose exec web4student /usr/local/bin/configure_user_aliases_safe.sh
-        docker compose exec web4student /usr/local/bin/manage_auth_state.sh export
-        echo "✅ Utenti creati e configurati dal file $CSV_FILE!"
+        create_users_from_csv "$2"
         ;;
 
     # Ripristina gli account di sistema Linux a partire dalle home directory esistenti
@@ -174,7 +170,11 @@ case "$1" in
     # Utile se si ricostruisce il container mantenendo i dati utente persistenti.
     restore-users)
         echo "♻️  Ripristino account Linux dalle home persistenti..."
+        docker compose exec web4student /usr/local/bin/manage_auth_state.sh restore
         docker compose exec web4student /usr/local/bin/restore_persisted_accounts.sh
+        docker compose exec web4student /usr/local/bin/configure_user_aliases.sh
+        docker compose exec web4student /usr/local/bin/configure_disk_quotas.sh
+        docker compose exec web4student /usr/local/bin/configure_student_limits.sh
         docker compose exec web4student /usr/local/bin/manage_auth_state.sh export
         echo "✅ Account ripristinati!"
         ;;
@@ -182,9 +182,21 @@ case "$1" in
     # Ricrea o riconfigura i file di alias web Apache per ciascun utente studente presente nel sistema.
     configure-aliases)
         echo "🔧 Riconfigurazione alias Apache per utenti esistenti..."
-        docker compose exec web4student /usr/local/bin/configure_user_aliases_safe.sh
+        docker compose exec web4student /usr/local/bin/configure_user_aliases.sh
         echo "✅ Alias riconfigurati!"
         ;; 
+
+    configure-quotas)
+        docker compose exec web4student /usr/local/bin/configure_disk_quotas.sh
+        ;;
+
+    configure-limits)
+        docker compose exec web4student /usr/local/bin/configure_student_limits.sh
+        ;;
+
+    check)
+        ./scripts/check_project.sh
+        ;;
 
     # Esegue lo script locale per analizzare ed evidenziare l'uso dello spazio su disco di ciascuna home utente
     student-usage)
@@ -222,8 +234,9 @@ case "$1" in
             # Attende l'avvio completo del servizio
             sleep 3
             # Ripristina l'utente 'admin' per l'accesso amministrativo esterno
-            mysql -u root -e 'CREATE USER IF NOT EXISTS \"admin\"@\"%\" IDENTIFIED BY \"admin123\";'
-            mysql -u root -e 'GRANT ALL PRIVILEGES ON *.* TO \"admin\"@\"%\" WITH GRANT OPTION;'
+            mysql -u root -e "CREATE USER IF NOT EXISTS '\$MYSQL_ADMIN_USER'@'%' IDENTIFIED BY '\$MYSQL_ADMIN_PASSWORD';"
+            mysql -u root -e "ALTER USER '\$MYSQL_ADMIN_USER'@'%' IDENTIFIED BY '\$MYSQL_ADMIN_PASSWORD';"
+            mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO '\$MYSQL_ADMIN_USER'@'%' WITH GRANT OPTION;"
             mysql -u root -e 'FLUSH PRIVILEGES;'
         "
         echo "✅ MySQL corretto!"
@@ -238,7 +251,7 @@ case "$1" in
     # Apre una console MySQL interattiva all'interno del container autenticandosi come 'admin' (richiede password)
     mysql-admin)
         echo "🗄️ Accesso MySQL come admin..."
-        docker compose exec web4student mysql -u admin -padmin123
+        docker compose exec web4student sh -lc 'MYSQL_PWD="$MYSQL_ADMIN_PASSWORD" mysql -u "$MYSQL_ADMIN_USER"'
         ;;
     
     # Rimuove tutti i container, le immagini buildate, i volumi e i container orfani dell'ambiente.

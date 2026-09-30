@@ -146,9 +146,9 @@ Questa checklist ti guida attraverso **4 fasi principali**:
 - [ ] **Connessione studente (se creato)**
   ```bash
   ssh rossi.marco@localhost -p 2222
-  # Password: student123
+  # Password: valore configurato in STUDENT_DEFAULT_PASSWORD
   pwd  # Dovrebbe mostrare: /home/3A/Rossi.Marco
-  passwd  # Cambia da student123
+  passwd  # Cambia la password al primo accesso
   exit
   ```
 
@@ -157,7 +157,7 @@ Questa checklist ti guida attraverso **4 fasi principali**:
   ```bash
   #mysql -h localhost -P 3307 -u admin -p
   mysql -h 172.22.0.9 -P 3306 -u admin -p
-  # Password: admin123
+  # Password: valore configurato in MYSQL_ADMIN_PASSWORD
   SHOW DATABASES;
   # Dovresti vedere: web4student, db_username, etc.
   exit
@@ -166,7 +166,7 @@ Questa checklist ti guida attraverso **4 fasi principali**:
   ```bash
   # Browser: http://localhost:8080/adminer.php
   # Server: localhost:3307
-  # Username: admin, Password: admin123
+  # Username: MYSQL_ADMIN_USER, Password: MYSQL_ADMIN_PASSWORD
   ```
 
 ### ✅ 3.4 Test Siti Web Studenti
@@ -265,7 +265,7 @@ Questa checklist ti guida attraverso **4 fasi principali**:
 - [ ] **Test connessione locale**
   ```bash
   docker exec -it web4student mysql -u root -p
-  # Password: admin123
+  # Password: valore configurato in MYSQL_ADMIN_PASSWORD
   ```
 - [ ] **Verifica porte**
   ```bash
