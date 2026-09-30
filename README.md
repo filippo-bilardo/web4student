@@ -49,7 +49,8 @@ Perfetto per **scuole, università e corsi di programmazione**!
 - ✅ **Account Automatici**: Creazione da file CSV
 - ✅ **Home Isolate**: Directory personali protette
 - ✅ **Database Personali**: Schema dedicato per studente
-- ✅ **Quote Disco**: Limite 10MB per utente (8MB soft, 10MB hard)
+- ✅ **Quote Disco**: Quote configurate per gli account amministrativi; le quote studenti sono gestibili separatamente
+- ✅ **Quota Processi**: Gli account del gruppo `web4students` sono limitati a 100 processi per utente
 - ✅ **SSH Access**: Connessione sicura per ogni studente
 
 ---
@@ -106,12 +107,18 @@ open http://localhost:8080
 # Crea utenti da CSV
 ./manage.sh create-users
 
+# Crea utenti da un CSV alternativo
+./manage.sh create-users-file volumes/students/2026_5Fi.csv
+
 # Se il container è stato ricreato, ripristina anche gli account
 # presenti nei volumi ma assenti nell'attuale students.csv
 ./manage.sh restore-users
 
 # Riepilogo spazio occupato dalle home degli studenti
 ./manage.sh student-usage
+
+# Studenti loggati e utilizzo CPU/RAM
+./manage.sh system-usage
 
 # Verifica stato
 ./manage.sh status
@@ -147,6 +154,7 @@ web4student/
 └── volumes/               # Dati persistenti
     ├── config/           # Configurazioni web
     ├── home/             # Directory studenti
+    ├── students/         # CSV aggiuntivi
     ├── mysql_data/       # Database MySQL
     └── logs/             # Log di sistema
 ```
@@ -185,6 +193,9 @@ passwd
 
 La password cambiata viene salvata in modo persistente e resta valida anche dopo riavvio o ricreazione del container.
 
+Quando il CSV contiene la colonna `anno`, la home viene creata nel formato
+`/home/anno/classe/username`, ad esempio `/home/2026/5FINF/crimella.luca`.
+
 ### Il Tuo Ambiente Personale
 ```
 🏠 ~/                     # Home directory
@@ -219,9 +230,9 @@ mysql -u username -p
 ```bash
 # 1. Prepara file CSV
 cat > students.csv << EOF
-classe,nome,cognome,username
-3A,Marco,Rossi,mrossi
-3A,Giulia,Bianchi,gbianchi
+anno,classe,cognome,nome,username
+2026,3A,Rossi,Marco,rossi.marco
+2026,3A,Bianchi,Giulia,bianchi.giulia
 EOF
 
 # 2. Crea account
@@ -245,8 +256,10 @@ EOF
 ./manage.sh restart      # Riavvia
 ./manage.sh logs         # Visualizza log
 ./manage.sh shell        # Accesso shell
+./manage.sh create-users-file volumes/students/2026_5Fi.csv # CSV alternativo
 ./manage.sh restore-users # Ricrea account dalle home persistenti
 ./manage.sh student-usage # Riepilogo spazio home studenti
+./manage.sh system-usage  # Studenti loggati e CPU/RAM
 ./manage.sh backup       # Backup dati
 ./manage.sh clean        # Reset completo
 ```
@@ -340,7 +353,18 @@ docker exec -it web4student bash
 
 # Verifica processi
 docker exec web4student ps aux
+
+# Studenti loggati e utilizzo CPU/RAM
+./manage.sh system-usage
 ```
+
+### Limite processi degli studenti
+
+Gli account studenti appartengono al gruppo `web4students`. La configurazione
+`volumes/config/web4student-students.conf` imposta un limite soft e hard di 100
+processi per account, applicato alle nuove sessioni SSH tramite `pam_limits`.
+Questo riduce l'impatto di fork bomb e programmi che generano processi senza
+controllo.
 
 ---
 
