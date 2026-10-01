@@ -95,6 +95,9 @@ Queste modifiche sono state raccolte nel commit con messaggio
 - Copiati in `volumes/www` homepage, favicon, Adminer, documentazione
   infrastrutturale e pagina `4c.php`; le modifiche alla homepage non richiedono
   più una nuova build dell'immagine.
+- Aggiornate le porte Compose: MySQL è disponibile solo su `127.0.0.1:3307`,
+  HTTP/Node.js restano interni alla rete Docker, mentre SSH e le porte degli
+  esercizi sono pubblicate esplicitamente.
 - Aggiornata la documentazione README con bootstrap, ripristino account,
   gestione segreti, quote e controlli del progetto.
 

@@ -38,28 +38,41 @@ services:
     restart: unless-stopped
     
     # ===========================================================================
-    # ESPOSIZIONE PORTE INTERNE - Routing gestito da nginx-proxy-manager
+    # ESPOSIZIONE PORTE
     # ===========================================================================
-    # Le porte sono esposte solo internamente alla rete Docker
-    # Il routing HTTP/HTTPS è gestito da nginx-proxy-manager
-    # Solo SSH è esposto direttamente sull'host per accesso diretto
+    # - HTTP/HTTPS e Node.js: raggiungibili solo tramite nginx-proxy-manager
+    #   (rete Docker condivisa), nessuna porta pubblicata sull'host
+    # - MySQL: accessibile solo dalla rete Docker e da localhost dell'host
+    # - SSH ed esercizi con le socket: pubblicati sull'host perché usati
+    #   direttamente da studenti/docente
+    # ===========================================================================
     ports:
       # SSH: porta 22 del container -> porta 2222 dell'host
-      # Connessione diretta: ssh username@localhost -p 2222
+      # Connessione diretta: ssh username@IP-host -p 2222
       - "2222:22"
-      - "8080:80"   # se si decide di aprire direttamente la porta 8080 dell'host
-      - "3001:3000" # se si decide di aprire direttamente la porta 3000 dell'host
-      - "3307:3306" # se si decide di aprire direttamente la porta 3307 dell'host
-      - "2223:2223" # esercizi con le socket
-      - "2224:2224" # esercizi con le socket
-      - "2225:5555" # esercizi con le socket
-      - "2226-2249:2226-2249" # range porte VM esposte al container
 
+      # Accesso diretto per test/debug, SOLO da localhost dell'host
+      # (decommenta se serve, altrimenti lascia che passi da NPM)
+      # - "127.0.0.1:8080:80"
+      # - "127.0.0.1:3001:3000"
+
+      # MySQL: solo da localhost (es. tunnel SSH, SSH, phpMyAdmin sull'host)
+      - "127.0.0.1:3307:3306"
+
+      # Esercizi con le socket (esposti all'esterno)
+      - "2223:2223"
+      - "2224:2224"
+      - "2225:5555"   # host 2225 -> container 5555
+      # Range porte VM esposte al container (esercizi con le socket)
+      - "2226-2249:2226-2249"
+
+    # Porte raggiungibili dagli altri container della rete (es. NPM).
+    # Documentano i servizi in ascolto; non aprono nulla sull'host.
     expose:
-      - "80"     # HTTP per nginx-proxy-manager
-      - "443"    # HTTPS per nginx-proxy-manager
-      - "3000"   # Node.js per nginx-proxy-manager
-      - "3306"   # MySQL per accesso interno
+      - "80"     # HTTP -> proxy host: nome-servizio, porta 80
+      - "3000"   # Node.js -> proxy host: nome-servizio, porta 3000
+      - "3306"   # MySQL, solo accesso interno
+      #- "443"   # nel container non c'è un servizio TLS
     
     # ===========================================================================
     # ETICHETTE PER NGINX PROXY MANAGER - Configurazione automatica routing
